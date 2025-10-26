@@ -27,7 +27,11 @@ import com.example.vetcare_grupo11.ui.MainScreen
 
 
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(
+    navController: NavHostController,
+    darkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
     // Ruta actual
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: "login"
@@ -106,11 +110,16 @@ fun AppNavigation(navController: NavHostController) {
                     LoadingScreen(navController = navController)
                 }
                 composable("main") {
-                    MainScreen()
+                    MainScreen(onGoSettings = { navController.navigate("settings") })
                 }
+                composable("settings") {
+                    SettingsScreen(
+                        darkTheme = darkTheme,
+                        onThemeChange = onThemeChange,
+                        onGoHome = { navController.navigate("main") }
+                    )
                 }
             }
         }
     }
-
-
+}

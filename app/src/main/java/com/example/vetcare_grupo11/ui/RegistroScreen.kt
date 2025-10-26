@@ -8,13 +8,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.unit.dp
+
 
 // Reutilizo tu paleta
 private val Teal = Color(0xFF00A9B9)
@@ -134,6 +140,8 @@ fun RegistroScreenSimple(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    var showPass by remember { mutableStateOf(false) }
+                    var showPass2 by remember { mutableStateOf(false) }
 
                     // ======= CONTRASEÑA =======
                     OutlinedTextField(
@@ -143,20 +151,28 @@ fun RegistroScreenSimple(
                             errPass = null
                         },
                         label = { Text("Contraseña") },
+                        singleLine = true,
+                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
                         isError = errPass != null,
                         supportingText = { errPass?.let { Text(it) } },
                         trailingIcon = {
-                            if (errPass != null) {
-                                Icon(
-                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
-                                    contentDescription = null,
-                                    tint = Coral
-                                )
+                            Row {
+                                if (errPass != null) {
+                                    Icon(
+                                        painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                        contentDescription = null,
+                                        tint = Coral
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                }
+                                TextButton(onClick = { showPass = !showPass }) {
+                                    Text(if (showPass) "Ocultar" else "Mostrar")
+                                }
                             }
                         },
-                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+
 
                     // ======= REPETIR CONTRASEÑA =======
                     OutlinedTextField(
@@ -166,24 +182,32 @@ fun RegistroScreenSimple(
                             errPass2 = null
                         },
                         label = { Text("Repite contraseña") },
+                        singleLine = true,
+                        visualTransformation = if (showPass2) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
                         isError = errPass2 != null,
                         supportingText = { errPass2?.let { Text(it) } },
                         trailingIcon = {
-                            if (errPass2 != null) {
-                                Icon(
-                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
-                                    contentDescription = null,
-                                    tint = Coral
-                                )
+                            Row {
+                                if (errPass2 != null) {
+                                    Icon(
+                                        painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                        contentDescription = null,
+                                        tint = Coral
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                }
+                                TextButton(onClick = { showPass2 = !showPass2 }) {
+                                    Text(if (showPass2) "Ocultar" else "Mostrar")
+                                }
                             }
                         },
-                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
+
                     Button(
                         onClick = {
-                            // Validaciones (IE 2.1.2 + 2.2.1)
+
                             var ok = true
                             if (nombre.trim().length < 3) {
                                 errNombre = "Mínimo 3 caracteres"
