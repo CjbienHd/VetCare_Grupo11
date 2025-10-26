@@ -15,13 +15,19 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+
+// Asegúrate de que los nombres de los archivos donde están estas funciones coincidan.
+// Si LoginVisualScreen está en LoginScreen.kt, la importación será correcta.
 import com.example.vetcare_grupo11.ui.LoginVisualScreen
-import com.example.vetcare_grupo11.ui.RegisterVisualScreen
+// Esta es la importación para tu pantalla de registro
+import com.example.vetcare_grupo11.ui.RegistroScreenSimple
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -29,7 +35,7 @@ fun AppNavigation(navController: NavHostController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: "login"
 
-    // Recordar ruta anterior para decidir sentido
+    // Recordar ruta anterior para decidir sentido de la animación
     var lastRoute by remember { mutableStateOf(currentRoute) }
     val forward = remember(currentRoute, lastRoute) {
         lastRoute == "login" && currentRoute == "register"
@@ -42,9 +48,9 @@ fun AppNavigation(navController: NavHostController) {
             val dur = 650
             val ease = FastOutSlowInEasing
             if (forward) {
-                // Login -> Registro (entra desde la derecha)
+                // Animación: Login -> Registro (la nueva pantalla entra desde la derecha)
                 (slideInHorizontally(
-                    initialOffsetX = { full -> (full * 0.9f).toInt() },           // 👈 parámetro nombrado
+                    initialOffsetX = { full -> (full * 0.9f).toInt() },
                     animationSpec = tween(dur, easing = ease)
                 ) + fadeIn(
                     animationSpec = tween(dur, easing = ease),
@@ -54,13 +60,13 @@ fun AppNavigation(navController: NavHostController) {
                     animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
                 )) togetherWith
                         (slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> -fullWidth / 2 },       // 👈 parámetro nombrado
+                            targetOffsetX = { fullWidth -> -fullWidth / 2 },
                             animationSpec = tween(250)
                         ) + fadeOut())
             } else {
-                // Registro -> Login (entra desde la izquierda)
+                // Animación: Registro -> Login (la nueva pantalla entra desde la izquierda)
                 (slideInHorizontally(
-                    initialOffsetX = { full -> (full * 0.9f).toInt() },          // 👈 parámetro nombrado
+                    initialOffsetX = { full -> -(full * 0.9f).toInt() }, // Cambiado a negativo para que entre desde la izquierda
                     animationSpec = tween(dur, easing = ease)
                 ) + fadeIn(
                     animationSpec = tween(dur, easing = ease),
@@ -70,15 +76,15 @@ fun AppNavigation(navController: NavHostController) {
                     animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
                 )) togetherWith
                         (slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> -fullWidth / 2 },       // 👈 parámetro nombrado
+                            targetOffsetX = { fullWidth -> fullWidth / 2 }, // Cambiado a positivo para que salga a la derecha
                             animationSpec = tween(250)
                         ) + fadeOut(animationSpec = tween(dur, easing = ease)))
             }.using(SizeTransform(clip = false))
         },
         modifier = Modifier.fillMaxSize(),
         label = "NavTransitions"
-    ) { route ->                   // 👈 ahora USAMOS el targetState
-        key(route) {               // fuerza recomposición por ruta y satisface la inspección
+    ) { route ->
+        key(route) {
             NavHost(
                 navController = navController,
                 startDestination = "login",
@@ -90,14 +96,13 @@ fun AppNavigation(navController: NavHostController) {
                     )
                 }
                 composable("register") {
-                    RegisterVisualScreen(
-                        onBackToLogin = { navController.popBackStack() }
+                    // CÓDIGO CORREGIDO AQUÍ:
+                    // Usamos el nombre correcto de la función y el parámetro correcto.
+                    RegistroScreenSimple(
+                        goLogin = { navController.popBackStack() }
                     )
                 }
             }
         }
     }
 }
-
-
-

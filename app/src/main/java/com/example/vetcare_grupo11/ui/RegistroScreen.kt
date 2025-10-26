@@ -1,47 +1,54 @@
-package com.example.vetcare_grupo11.ui
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
+package com.example.vetcare_grupo11.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
-// Paleta consistente con el login
+// Reutilizo tu paleta
 private val Teal = Color(0xFF00A9B9)
 private val Coral = Color(0xFFFF6F61)
 private val CardSoft = Color(0xFFE6F4F1)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterVisualScreen(onBackToLogin: () -> Unit = {}) {
+fun RegistroScreenSimple(
+    goLogin: () -> Unit = {}
+) {
+    // Estados del formulario
+    var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var rut by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var showPassword by remember { mutableStateOf(false) }
-    var calle by remember { mutableStateOf("") }
-    var numero by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    var pass2 by remember { mutableStateOf("") }
+
+    // Errores reactivos
+    var errNombre by remember { mutableStateOf<String?>(null) }
+    var errEmail by remember { mutableStateOf<String?>(null) }
+    var errPass by remember { mutableStateOf<String?>(null) }
+    var errPass2 by remember { mutableStateOf<String?>(null) }
+
+    // Confirmación
+    var registrado by remember { mutableStateOf(false) }
+
+    val ctx = LocalContext.current
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    // Título centrado como en el login
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
-                            "VetCare Móvil",
+                            "Crear cuenta",
                             color = Color.White,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                         )
@@ -57,36 +64,21 @@ fun RegisterVisualScreen(onBackToLogin: () -> Unit = {}) {
                 .fillMaxSize()
                 .padding(inner)
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // Tarjeta de bienvenida (centrada)
             Surface(
                 color = CardSoft,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "Crear cuenta 🐾",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
-                    )
-                    Text(
-                        "Completa tus datos para registrarte",
-                        color = Color.Black.copy(alpha = 0.65f),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                Column(Modifier.padding(16.dp)) {
+                    Text("Regístrate 📝", style = MaterialTheme.typography.titleMedium)
+                    Text("Completa los datos para crear tu usuario", color = Color.Black.copy(alpha = 0.65f))
                 }
             }
 
-            // Card principal del formulario
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -97,80 +89,178 @@ fun RegisterVisualScreen(onBackToLogin: () -> Unit = {}) {
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    // ======= NOMBRE =======
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Correo") },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Teal) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = rut,
-                        onValueChange = { rut = it },
-                        label = { Text("RUT") }, // Ej: 12.345.678-9
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, tint = Teal) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Teal) },
-                        singleLine = true,
-                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        value = nombre,
+                        onValueChange = {
+                            nombre = it
+                            errNombre = null
+                        },
+                        label = { Text("Nombre") },
+                        isError = errNombre != null,
+                        supportingText = { errNombre?.let { Text(it) } },
                         trailingIcon = {
-                            TextButton(onClick = { showPassword = !showPassword }) {
-                                Text(if (showPassword) "Ocultar" else "Mostrar")
+                            if (errNombre != null) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                    contentDescription = null,
+                                    tint = Coral
+                                )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = calle,
-                        onValueChange = { calle = it },
-                        label = { Text("Domicilio (calle)") },
-                        leadingIcon = { Icon(Icons.Default.Home, contentDescription = null, tint = Teal) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    // ======= EMAIL =======
                     OutlinedTextField(
-                        value = numero,
-                        onValueChange = { numero = it },
-                        label = { Text("Número") },
-                        leadingIcon = { Icon(Icons.Filled.Place, contentDescription = null, tint = Teal) },
+                        value = email,
+                        onValueChange = {
+                            email = it
+                            errEmail = null
+                        },
+                        label = { Text("Email") },
+                        isError = errEmail != null,
+                        supportingText = { errEmail?.let { Text(it) } },
+                        trailingIcon = {
+                            if (errEmail != null) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                    contentDescription = null,
+                                    tint = Coral
+                                )
+                            }
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Botón coral (solo visual)
+                    // ======= CONTRASEÑA =======
+                    OutlinedTextField(
+                        value = pass,
+                        onValueChange = {
+                            pass = it
+                            errPass = null
+                        },
+                        label = { Text("Contraseña") },
+                        isError = errPass != null,
+                        supportingText = { errPass?.let { Text(it) } },
+                        trailingIcon = {
+                            if (errPass != null) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                    contentDescription = null,
+                                    tint = Coral
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // ======= REPETIR CONTRASEÑA =======
+                    OutlinedTextField(
+                        value = pass2,
+                        onValueChange = {
+                            pass2 = it
+                            errPass2 = null
+                        },
+                        label = { Text("Repite contraseña") },
+                        isError = errPass2 != null,
+                        supportingText = { errPass2?.let { Text(it) } },
+                        trailingIcon = {
+                            if (errPass2 != null) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_dialog_alert),
+                                    contentDescription = null,
+                                    tint = Coral
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
                     Button(
-                        onClick = { /* solo UI */ },
+                        onClick = {
+                            // Validaciones (IE 2.1.2 + 2.2.1)
+                            var ok = true
+                            if (nombre.trim().length < 3) {
+                                errNombre = "Mínimo 3 caracteres"
+                                ok = false
+                            }
+                            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                errEmail = "Email inválido"
+                                ok = false
+                            }
+                            if (pass.length < 6) {
+                                errPass = "Mínimo 6 caracteres"
+                                ok = false
+                            }
+                            if (pass != pass2) {
+                                errPass2 = "No coinciden"
+                                ok = false
+                            }
+                            if (!ok) return@Button
+
+                            val guardado = saveUserIfNew(ctx, nombre.trim(), email.trim(), pass)
+                            if (!guardado) {
+                                errEmail = "Este correo ya está registrado"
+                            } else {
+                                registrado = true
+                                // Vuelve al login
+                                goLogin()
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Coral),
+                        colors = ButtonDefaults.buttonColors(containerColor = Teal),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text("Registrarme", color = Color.White)
                     }
 
-                    // Link para ir al login (solo visual)
+                    if (registrado) {
+                        Text(
+                            text = "Registro exitoso",
+                            color = Teal,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
                     TextButton(
-                        onClick = onBackToLogin,
+                        onClick = goLogin,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("¿Ya tienes cuenta? Inicia sesión", color = Teal)
+                        Text("Ya tengo cuenta", color = Teal)
                     }
                 }
             }
-
-            Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+/** Guarda usuario si NO existe el email. Formato: email|pass|nombre;email|pass|nombre;... */
+private fun saveUserIfNew(
+    ctx: android.content.Context,
+    nombre: String,
+    email: String,
+    pass: String
+): Boolean {
+    val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
+    val raw = sp.getString("usuarios", "") ?: ""
+    val entries = raw.split(";").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+
+    val exists = entries.any {
+        val parts = it.split("|")
+        parts.isNotEmpty() && parts[0] == email
+    }
+    if (exists) return false
+
+    // Formato simple: email|pass|nombre
+    entries.add("$email|$pass|$nombre")
+    val joined = entries.joinToString(";")
+    sp.edit().putString("usuarios", joined).apply()
+    return true
 }
