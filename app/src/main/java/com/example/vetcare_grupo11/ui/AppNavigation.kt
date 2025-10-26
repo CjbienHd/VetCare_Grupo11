@@ -22,12 +22,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.vetcare_grupo11.ui.LoadingScreen
+import com.example.vetcare_grupo11.ui.MainScreen
 
-// Asegúrate de que los nombres de los archivos donde están estas funciones coincidan.
-// Si LoginVisualScreen está en LoginScreen.kt, la importación será correcta.
-import com.example.vetcare_grupo11.ui.LoginVisualScreen
-// Esta es la importación para tu pantalla de registro
-import com.example.vetcare_grupo11.ui.RegistroScreenSimple
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -92,17 +89,28 @@ fun AppNavigation(navController: NavHostController) {
             ) {
                 composable("login") {
                     LoginVisualScreen(
-                        onCreateAccount = { navController.navigate("register") }
+                        onCreateAccount = { navController.navigate("register") },
+                        {
+                            navController.navigate("loading")
+                        }
                     )
                 }
                 composable("register") {
-                    // CÓDIGO CORREGIDO AQUÍ:
+
                     // Usamos el nombre correcto de la función y el parámetro correcto.
                     RegistroScreenSimple(
                         goLogin = { navController.popBackStack() }
                     )
                 }
+                composable("loading") {
+                    LoadingScreen(navController = navController)
+                }
+                composable("main") {
+                    MainScreen()
+                }
+                }
             }
         }
     }
-}
+
+

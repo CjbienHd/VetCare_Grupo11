@@ -63,9 +63,7 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        // --- 2. Proceso de login asíncrono ---
-        // Usamos viewModelScope para lanzar una corrutina que se cancelará
-        // automáticamente si el ViewModel es destruido.
+
         viewModelScope.launch {
             // Ponemos el estado en 'cargando' para mostrar un spinner en la UI.
             _state.value = _state.value.copy(loading = true)
