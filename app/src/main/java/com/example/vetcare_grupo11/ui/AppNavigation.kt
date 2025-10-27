@@ -134,7 +134,8 @@ fun AppNavigation(
                     SettingsScreen(
                         darkTheme = darkTheme,
                         onThemeChange = onThemeChange,
-                        onGoHome = { navController.navigate("main") }
+                        onGoHome = { navController.navigate("main") },
+                        onGoPatients = { navController.navigate("patients") }
                     )
 
 
@@ -150,7 +151,7 @@ fun AppNavigation(
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { /* ya estás */ },
                         onGoReminders = { /* ... */ },
-                        onSettings = { /* ... */ },
+                        onSettings = { navController.navigate("settings") },
                         currentTab = MainTabPatients.PATIENTS
                     )
                 }
