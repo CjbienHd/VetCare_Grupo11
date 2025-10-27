@@ -61,6 +61,7 @@ fun AppNavigation(
     onThemeChange: (Boolean) -> Unit
 ) {
     val ctx = LocalContext.current
+    //Se crea instancia de PatientsViewModel
     val patientsVm: PatientsViewModel = viewModel(
         factory = PatientsViewModelFactory(SharedPrefsPatientsStore(ctx))
     )
@@ -76,6 +77,7 @@ fun AppNavigation(
     LaunchedEffect(currentRoute) { lastRoute = currentRoute }
 
     AnimatedContent(
+        //Al cambiar este valor se actualiza la pantalla animando la transicion
         targetState = currentRoute,
         //Aqui se define la animacion
         transitionSpec = {
@@ -84,18 +86,26 @@ fun AppNavigation(
             if (forward) {
                 //Si la navegacion es hacia "adelante" la pantalla se mueve hacia la derecha si no, entonces se mueve hacia la izquierda
                 (slideInHorizontally(
+                    //La pantalla se mueve horizontalmente
                     initialOffsetX = { full -> (full * 0.9f).toInt() },
                     animationSpec = tween(dur, easing = ease)
+                    //Cambia la opacidad de la pantalla de 0% a 100%
                 ) + fadeIn(
                     animationSpec = tween(dur, easing = ease),
                     initialAlpha = 0.0f
+                    //La pantalla cambia de tamaño
                 ) + scaleIn(
                     initialScale = 0.98f,
                     animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
+
+                    //Permite definir 2 conjuntos de animacion al mismo tiempo
+                    //para que salga lo viejo y entre lo nuevo
                 )) togetherWith
+                        //La pantalla vieja se desliza para dejar espacio
                         (slideOutHorizontally(
                             targetOffsetX = { fullWidth -> -fullWidth / 2 },
                             animationSpec = tween(250)
+                            //Mientras la pantalla vieja se va, esta se desvanece
                         ) + fadeOut())
             } else {
                 // Animación: Registro -> Login (la nueva pantalla entra desde la izquierda)
@@ -145,8 +155,10 @@ fun AppNavigation(
                     LoadingScreen(navController = navController)
                 }
                 composable("main") {
+                    //Obtiene la lista de Pacientes
                     val patients by patientsVm.patients.collectAsState()
                     MainScreen(
+                        //Muestra la cantidad de pacientes en la lista
                         pacientesActivos = patients.size,
                         onGoSettings = { navController.navigate("settings") },
                         onGoPatients = { navController.navigate("patients") },

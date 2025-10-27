@@ -120,6 +120,7 @@ fun AddPatientScreen(
 
                     // Selector de especie (exposed dropdown)
                     ExposedDropdownMenuBox(
+                        //Aqui se configura para alternar el menu desplegable
                         expanded = especieExpanded,
                         onExpandedChange = { especieExpanded = !especieExpanded }
                     ) {

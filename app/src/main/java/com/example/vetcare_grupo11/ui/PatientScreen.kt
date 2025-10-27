@@ -40,6 +40,7 @@ import com.example.vetcare_grupo11.viewmodel.Patient
 
 @Composable
 fun PatientsScreen(
+    //Lista de pacientes a mostrar
     patients: List<Patient>,
     //Navega hasta la pagina de adicion de paciente
     onAddPatient: () -> Unit,
@@ -190,6 +191,7 @@ private fun PatientCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth()
+            //combinedClickable permite asignar distintas acciones dependiendo de los tipos de clicks
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongPress

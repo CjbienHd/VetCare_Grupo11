@@ -24,7 +24,7 @@ data class Patient(
 class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
     //Es mutable y privada, solo ViewModel puede modificarla
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
-    //Esta es publia e inmutable, se expone a la UI
+    //Esta es publica e inmutable, se expone a la UI
     val patients: StateFlow<List<Patient>> = _patients
     //Transoforma la lista de pacientes a un numero(total de pacientes)
     val activeCount: StateFlow<Int> =
@@ -48,7 +48,7 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
 
         // Se lanza corrutina para guardar los pacientes cada vez que cambian
         viewModelScope.launch {
-            // Cada vez que se actualiza la lista de pacientes, se guarda, excepto el valor inicial, para queno guarde los datos que se cargaron al inicio
+            // Cada vez que se actualiza la lista de pacientes, se guarda, excepto el valor inicial, para que no guarde los datos que se cargaron al inicio
             patients.drop(1).collect { list -> store.save(list) }
         }
     }
