@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 
 
-// Reutiliza la paleta
+// Colores personalizados para toda la app
 private val Teal = Color(0xFF00A9B9)
 private val Coral = Color(0xFFFF6F61)
 private val CardSoft = Color(0xFFE6F4F1)
@@ -43,9 +43,9 @@ fun RegistroScreenSimple(
     var errPass by remember { mutableStateOf<String?>(null) }
     var errPass2 by remember { mutableStateOf<String?>(null) }
 
-    // Confirmación
+    // Indica si el usuario fue registrado con éxito
     var registrado by remember { mutableStateOf(false) }
-
+    // Contexto para acceder a SharedPreferences
     val ctx = LocalContext.current
 
     Scaffold(
@@ -74,7 +74,7 @@ fun RegistroScreenSimple(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(Modifier.height(12.dp))
-
+            // Tarjeta superior con título y subtítulo
             Surface(
                 color = CardSoft,
                 shape = RoundedCornerShape(20.dp),
@@ -85,7 +85,7 @@ fun RegistroScreenSimple(
                     Text("Completa los datos para crear tu usuario", color = Color.Black.copy(alpha = 0.65f))
                 }
             }
-
+            // Tarjeta principal donde están los campos del formulario
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -96,7 +96,8 @@ fun RegistroScreenSimple(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // ======= NOMBRE =======
+                    // Campo de NOMBRE
+                    // Si hay error, muestra mensaje debajo y cambia el borde a rojo
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = {
@@ -141,6 +142,8 @@ fun RegistroScreenSimple(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    // Estados para mostrar / ocultar contraseñas
+
                     var showPass by remember { mutableStateOf(false) }
                     var showPass2 by remember { mutableStateOf(false) }
 
@@ -206,11 +209,13 @@ fun RegistroScreenSimple(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
+                    // Botón principal de "Registrarme"
+                    // Acá se hacen todas las validaciones antes de guardar
                     Button(
                         onClick = {
 
                             var ok = true
+                            // Validaciones básicas
                             if (nombre.trim().length < 3) {
                                 errNombre = "Mínimo 3 caracteres"
                                 ok = false
@@ -227,10 +232,12 @@ fun RegistroScreenSimple(
                                 errPass2 = "No coinciden"
                                 ok = false
                             }
+                            // Si alguna validación falla, corta la ejecución
                             if (!ok) return@Button
 
                             //saveUserIfNew devuelve un booleano, verificando de que el email no esté registrado
                             val guardado = saveUserIfNew(ctx, nombre.trim(), email.trim(), pass)
+                            // Si ya existía el correo, muestra error
                             if (!guardado) {
                                 errEmail = "Este correo ya está registrado"
                             } else {
@@ -247,7 +254,7 @@ fun RegistroScreenSimple(
                     ) {
                         Text("Registrarme", color = Color.White)
                     }
-
+                    // Mensaje de confirmación si el registro fue exitoso
                     if (registrado) {
                         Text(
                             text = "Registro exitoso",
@@ -255,7 +262,7 @@ fun RegistroScreenSimple(
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-
+                    // Botón para volver al login si ya tiene cuenta
                     TextButton(
                         onClick = goLogin,
                         modifier = Modifier.align(Alignment.CenterHorizontally)

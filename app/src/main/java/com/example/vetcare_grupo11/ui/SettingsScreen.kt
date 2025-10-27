@@ -41,6 +41,7 @@ fun SettingsScreen(
     var showInfo by remember { mutableStateOf(false) }
 
     Scaffold(
+        // Barra superior con título y engranaje
         topBar = {
             TopAppBar(
                 title = {
@@ -66,6 +67,7 @@ fun SettingsScreen(
                 )
             )
         },
+        // Barra inferior
         bottomBar = {
             SettingsBottomBar(
                 current = currentTab,
@@ -86,7 +88,7 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // === Card 1: Cambiar Tema ===
+            // Permite alternar entre claro y oscuro
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Cambiar Tema",
@@ -101,7 +103,7 @@ fun SettingsScreen(
                 onClick = { onThemeChange(!darkTheme) }
             )
 
-            // === Card 2: Copia Local / Exportar ===
+             // Exportar Datos
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Copia Local/ Exportar",
