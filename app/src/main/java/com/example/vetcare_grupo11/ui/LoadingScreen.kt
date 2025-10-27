@@ -22,21 +22,23 @@ import com.example.vetcare_grupo11.R
 
 @Composable
 fun LoadingScreen(navController: NavController) {
-    // Navega a "main" tras 2s
+    // Uso LaunchedEffect para ejecutar una acción una sola vez al entrar.
+    // En este caso, esperar 2 segundos y luego navegar a "main".
     LaunchedEffect(Unit) {
         delay(2000)
         navController.navigate("main") {
-            popUpTo("loading") { inclusive = true }
+            popUpTo("loading") { inclusive = true } // elimina pantalla del backstack
         }
     }
 
-
+    // Animación suave de aparición del contenido
     val alpha by animateFloatAsState(
         targetValue = 1f,
         animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
         label = "fadeIn"
     )
 
+    // Box centrado: estructura simple para centrar logo + indicador
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -45,6 +47,7 @@ fun LoadingScreen(navController: NavController) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
+            // Logo de VetCare se ajusta con ContentScale.Fit
             Image(
                 painter = painterResource(id = R.drawable.logo_vetcare),
                 contentDescription = "Logo VetCare",
@@ -54,9 +57,9 @@ fun LoadingScreen(navController: NavController) {
                     .wrapContentHeight()
             )
 
-
             Spacer(Modifier.height(24.dp))
 
+            // Indicador de carga circular.
             CircularProgressIndicator(
                 strokeWidth = 5.dp,
                 modifier = Modifier.size(44.dp)
