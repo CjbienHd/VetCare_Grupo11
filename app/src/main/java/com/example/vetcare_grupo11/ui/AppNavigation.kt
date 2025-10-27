@@ -31,7 +31,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vetcare_grupo11.data.SharedPrefsPatientsStore
 import com.example.vetcare_grupo11.viewmodel.PatientsViewModelFactory
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
 
+private val Teal = Color(0xFF00A9B9)
+private val TealDark = Color(0xFF0093A2)
+private val Coral = Color(0xFFFF6F61)
+private val Soft = Color(0xFFE6F4F1)
+private val Soft2 = Color(0xFFE5F1F1)
+
+private val FixedLightColors = lightColorScheme(
+    primary = Teal,
+    onPrimary = Color.White,
+    secondary = Coral,
+    onSecondary = Color.White,
+    background = Soft,
+    onBackground = TealDark,
+    surface = Color.White, // Cards are white
+    onSurface = TealDark,
+    surfaceVariant = Soft2, // Bottom bar
+    onSurfaceVariant = TealDark
+)
 
 @Composable
 fun AppNavigation(
@@ -103,19 +124,22 @@ fun AppNavigation(
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable("login") {
-                    LoginVisualScreen(
-                        onCreateAccount = { navController.navigate("register") },
-                        {
-                            navController.navigate("loading")
-                        }
-                    )
+                    MaterialTheme(colorScheme = FixedLightColors) {
+                        LoginVisualScreen(
+                            onCreateAccount = { navController.navigate("register") },
+                            {
+                                navController.navigate("loading")
+                            }
+                        )
+                    }
                 }
                 composable("register") {
-
-                    // Usamos el nombre correcto de la función y el parámetro correcto.
-                    RegistroScreenSimple(
-                        goLogin = { navController.popBackStack() }
-                    )
+                    MaterialTheme(colorScheme = FixedLightColors) {
+                        // Usamos el nombre correcto de la función y el parámetro correcto.
+                        RegistroScreenSimple(
+                            goLogin = { navController.popBackStack() }
+                        )
+                    }
                 }
                 composable("loading") {
                     LoadingScreen(navController = navController)
@@ -161,7 +185,9 @@ fun AppNavigation(
                         onSave = { p ->
                             patientsVm.addPatient(p)       // agrega al VM compartido
                             navController.popBackStack()   // vuelve a Patients
-                        }
+                        },
+                        onGoHome = { navController.navigate("main") },
+                        onGoPatients = { navController.navigate("patients") }
                     )
                 }
             }

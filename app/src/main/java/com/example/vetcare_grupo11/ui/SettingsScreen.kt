@@ -192,7 +192,7 @@ private fun SettingsRowCard(
 
 /** Bottom bar igual a Home */
 @Composable
-private fun SettingsBottomBar(
+fun SettingsBottomBar(
     current: MainTab,
     onReminders: () -> Unit,
     onHome: () -> Unit,
@@ -202,8 +202,8 @@ private fun SettingsBottomBar(
         NavigationBarItem(
             selected = current == MainTab.REMINDERS,
             onClick = onReminders,
-            icon = { Icon(imageVector = Icons.Outlined.Notifications, contentDescription = "Recordatorios") },
-            label = { Text("Recordatorios") }
+            icon = { Icon(imageVector = Icons.Outlined.Notifications, contentDescription = "Citas") },
+            label = { Text("Citas") }
         )
         NavigationBarItem(
             selected = current == MainTab.HOME,

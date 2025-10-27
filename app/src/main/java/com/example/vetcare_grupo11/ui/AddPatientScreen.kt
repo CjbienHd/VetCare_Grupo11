@@ -20,14 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.vetcare_grupo11.viewmodel.Patient
 
-private val Teal = Color(0xFF00A9B9)
-private val Coral = Color(0xFFFF6F61)
-private val CardSoft = Color(0xFFE6F4F1)
-
 @Composable
 fun AddPatientScreen(
     onBack: () -> Unit,
-    onSave: (Patient) -> Unit
+    onSave: (Patient) -> Unit,
+    onGoHome: () -> Unit,
+    onGoPatients: () -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("Perro") } // Perro | Gato
@@ -44,20 +42,28 @@ fun AddPatientScreen(
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
                             "VetCare Móvil",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Badge, contentDescription = "Volver", tint = Color.White)
+                        Icon(Icons.Default.Badge, contentDescription = "Volver", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Teal)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            SettingsBottomBar(
+                current = MainTab.PATIENTS,
+                onReminders = { /* No reminders needed here */ },
+                onHome = onGoHome,
+                onPatients = onGoPatients
+            )
+        }
     ) { inner ->
         Column(
             modifier = Modifier
@@ -70,7 +76,7 @@ fun AddPatientScreen(
             Spacer(Modifier.height(8.dp))
 
             // Tarjeta de cabecera
-            Surface(color = CardSoft, shape = RoundedCornerShape(20.dp)) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(20.dp)) {
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -80,11 +86,11 @@ fun AddPatientScreen(
                     Text(
                         "Agregar paciente 🐾",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "Completa la información para registrar",
-                        color = Color.Black.copy(alpha = 0.65f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -93,7 +99,7 @@ fun AddPatientScreen(
             // Card del formulario
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -105,7 +111,7 @@ fun AddPatientScreen(
                         value = nombre,
                         onValueChange = { nombre = it },
                         label = { Text("Nombre") },
-                        leadingIcon = { Icon(Icons.Default.Pets, contentDescription = null, tint = Teal) },
+                        leadingIcon = { Icon(Icons.Default.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -120,7 +126,7 @@ fun AddPatientScreen(
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Especie") },
-                            leadingIcon = { Icon(Icons.Default.Pets, contentDescription = null, tint = Teal) },
+                            leadingIcon = { Icon(Icons.Default.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = especieExpanded) },
                             modifier = Modifier
                                 .menuAnchor()
@@ -146,7 +152,7 @@ fun AddPatientScreen(
                         value = raza,
                         onValueChange = { raza = it },
                         label = { Text("Raza") },
-                        leadingIcon = { Icon(Icons.Default.Style, contentDescription = null, tint = Teal) },
+                        leadingIcon = { Icon(Icons.Default.Style, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -155,7 +161,7 @@ fun AddPatientScreen(
                         value = tutor,
                         onValueChange = { tutor = it },
                         label = { Text("Tutor") },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Teal) },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -175,18 +181,18 @@ fun AddPatientScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Coral),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         shape = RoundedCornerShape(16.dp),
                         enabled = nombre.isNotBlank() && raza.isNotBlank() && tutor.isNotBlank()
                     ) {
-                        Text("Guardar", color = Color.White)
+                        Text("Guardar", color = MaterialTheme.colorScheme.onSecondary)
                     }
 
                     TextButton(
                         onClick = onBack,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("Cancelar", color = Teal)
+                        Text("Cancelar", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }

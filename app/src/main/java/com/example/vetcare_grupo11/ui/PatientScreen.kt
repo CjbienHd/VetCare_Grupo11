@@ -248,8 +248,8 @@ private fun AppBottomBar(
         NavigationBarItem(
             selected = current == MainTabPatients.REMINDERS,
             onClick = onReminders,
-            icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Recordatorios") },
-            label = { Text("Recordatorios") }
+            icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Citas") },
+            label = { Text("Citas") }
         )
         NavigationBarItem(
             selected = current == MainTabPatients.HOME,
