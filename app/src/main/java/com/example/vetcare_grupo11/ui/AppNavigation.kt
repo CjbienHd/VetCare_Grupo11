@@ -48,9 +48,9 @@ private val FixedLightColors = lightColorScheme(
     onSecondary = Color.White,
     background = Soft,
     onBackground = TealDark,
-    surface = Color.White, // Cards are white
+    surface = Color.White,
     onSurface = TealDark,
-    surfaceVariant = Soft2, // Bottom bar
+    surfaceVariant = Soft2,
     onSurfaceVariant = TealDark
 )
 
@@ -77,11 +77,12 @@ fun AppNavigation(
 
     AnimatedContent(
         targetState = currentRoute,
+        //Aqui se define la animacion
         transitionSpec = {
             val dur = 650
             val ease = FastOutSlowInEasing
             if (forward) {
-                // Animación: Login -> Registro (la nueva pantalla entra desde la derecha)
+                //Si la navegacion es hacia "adelante" la pantalla se mueve hacia la derecha si no, entonces se mueve hacia la izquierda
                 (slideInHorizontally(
                     initialOffsetX = { full -> (full * 0.9f).toInt() },
                     animationSpec = tween(dur, easing = ease)
@@ -109,7 +110,7 @@ fun AppNavigation(
                     animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
                 )) togetherWith
                         (slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> fullWidth / 2 }, // Cambiado a positivo para que salga a la derecha
+                            targetOffsetX = { fullWidth -> fullWidth / 2 },
                             animationSpec = tween(250)
                         ) + fadeOut(animationSpec = tween(dur, easing = ease)))
             }.using(SizeTransform(clip = false))
@@ -135,7 +136,6 @@ fun AppNavigation(
                 }
                 composable("register") {
                     MaterialTheme(colorScheme = FixedLightColors) {
-                        // Usamos el nombre correcto de la función y el parámetro correcto.
                         RegistroScreenSimple(
                             goLogin = { navController.popBackStack() }
                         )
@@ -147,7 +147,7 @@ fun AppNavigation(
                 composable("main") {
                     val patients by patientsVm.patients.collectAsState()
                     MainScreen(
-                        pacientesActivos = patients.size,             // ← el MetricCard leerá esto
+                        pacientesActivos = patients.size,
                         onGoSettings = { navController.navigate("settings") },
                         onGoPatients = { navController.navigate("patients") },
                         proximasCitas = 0,
@@ -170,11 +170,11 @@ fun AppNavigation(
                     PatientsScreen(
                         patients = patients,
                         onAddPatient = { navController.navigate("add_patient") },
-                        onPatientClick = { /* detalle si quieres */ },
-                        onRemovePatient = { patientsVm.removePatient(it.id) },   // ← AQUÍ BORRA
+                        onPatientClick = { },
+                        onRemovePatient = { patientsVm.removePatient(it.id) },
                         onGoHome = { navController.navigate("main") },
-                        onGoPatients = { /* ya estás */ },
-                        onGoReminders = { /* ... */ },
+                        onGoPatients = { },
+                        onGoReminders = {  },
                         onSettings = { navController.navigate("settings") },
                         currentTab = MainTabPatients.PATIENTS
                     )
@@ -183,8 +183,8 @@ fun AppNavigation(
                     AddPatientScreen(
                         onBack = { navController.popBackStack() },
                         onSave = { p ->
-                            patientsVm.addPatient(p)       // agrega al VM compartido
-                            navController.popBackStack()   // vuelve a Patients
+                            patientsVm.addPatient(p)
+                            navController.popBackStack()
                         },
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { navController.navigate("patients") }

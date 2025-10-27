@@ -40,7 +40,8 @@ import com.example.vetcare_grupo11.viewmodel.Patient
 
 @Composable
 fun PatientsScreen(
-    patients: List<Patient>,              // ← recibe la lista del VM
+    patients: List<Patient>,
+    //Navega hasta la pagina de adicion de paciente
     onAddPatient: () -> Unit,
     onPatientClick: (Patient) -> Unit = {},
     onGoReminders: () -> Unit = {},
@@ -48,15 +49,16 @@ fun PatientsScreen(
     onSettings: () -> Unit = {},
     onRemovePatient: (Patient) -> Unit,
     onGoPatients: () -> Unit = {},
+    // Indica qué pestaña de la barra inferior está actualmente seleccionada.
     currentTab: MainTabPatients = MainTabPatients.PATIENTS
 ) {
+    // Almacena el paciente que se va a borrar. Se muestra dialogo de confirmacion en caso de no ser null
     var toDelete: Patient? by remember { mutableStateOf(null) }
     Scaffold(
 
         topBar = {
             TopAppBar(
                 title = {
-                    // Título centrado como en tu login/registro
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
                             "VetCare",
@@ -73,6 +75,7 @@ fun PatientsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },
+        //Añadir nuevo paciente
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPatient,
@@ -95,7 +98,9 @@ fun PatientsScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background
-    ) { inner ->
+    )
+    //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
+    { inner ->
 
         Column(
             modifier = Modifier
@@ -103,7 +108,7 @@ fun PatientsScreen(
                 .padding(inner)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Banda de bienvenida suave (opcional, mismo lenguaje visual)
+            // Banda de bienvenida suave ( mismo lenguaje visual)
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(20.dp),
@@ -123,7 +128,7 @@ fun PatientsScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "Mis Mascotas",
+                        "Mis Pacientes",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -131,6 +136,7 @@ fun PatientsScreen(
             }
 
             // Lista de pacientes
+            //Dibuja solo los pacientes que son visibles en la pantalla (LazyColumn)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -138,9 +144,11 @@ fun PatientsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 96.dp) // espacio para FAB/bottombar
             ) {
+                //Usa el id como clave unica para pacientes
                 items(patients, key = { it.id }) { p ->
                     PatientCard(
                         patient = p,
+                        //combinedClickable permite asignar distintas acciones dependiendo de los tipos de clicks
                         onClick = { onPatientClick(p) },
                                 onLongPress = { toDelete = p }
                     )
@@ -151,6 +159,7 @@ fun PatientsScreen(
     }
     if (toDelete != null) {
         AlertDialog(
+            //Si el usuario toca fuera de la alerta o presiona "cancelar" se cierra la alerta
             onDismissRequest = { toDelete = null },
             title = { Text("Eliminar paciente") },
             text  = { Text("¿Seguro que deseas eliminar a \"${toDelete!!.nombre}\"?") },
@@ -181,7 +190,7 @@ private fun PatientCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth()
-            .combinedClickable(             // ← aquí el long-press
+            .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongPress
             )
@@ -236,9 +245,9 @@ private fun PatientCard(
     }
 }
 
-/** Bottom bar estilo app (idéntico a tu Home, pero local para esta pantalla) */
 @Composable
 private fun AppBottomBar(
+    //Usa el parámetro current de tipo MainTabPatients para saber cuál de los tres ítems debe aparecer como "seleccionado".
     current: MainTabPatients,
     onReminders: () -> Unit,
     onHome: () -> Unit,
@@ -246,6 +255,7 @@ private fun AppBottomBar(
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
         NavigationBarItem(
+
             selected = current == MainTabPatients.REMINDERS,
             onClick = onReminders,
             icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Citas") },

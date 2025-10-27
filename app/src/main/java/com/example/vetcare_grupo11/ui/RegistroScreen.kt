@@ -19,25 +19,25 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.unit.dp
 
 
-// Reutilizo tu paleta
+// Reutiliza la paleta
 private val Teal = Color(0xFF00A9B9)
 private val Coral = Color(0xFFFF6F61)
 private val CardSoft = Color(0xFFE6F4F1)
 
 @Composable
 fun RegistroScreenSimple(
+    //Navegar de vuelta a LoginScreen.kt
     goLogin: () -> Unit = {}
 ) {
-    // Estados del formulario
+    // Almacenan el texto que el usuario escribe en cada uno de los campos
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var pass2 by remember { mutableStateOf("") }
 
-    // Errores reactivos
+    // guardar los mensajes de error específicos de cada campo. La interfaz reacciona a estos valores.
     var errNombre by remember { mutableStateOf<String?>(null) }
     var errEmail by remember { mutableStateOf<String?>(null) }
     var errPass by remember { mutableStateOf<String?>(null) }
@@ -64,6 +64,7 @@ fun RegistroScreenSimple(
             )
         },
         containerColor = Color.White
+        //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     ) { inner ->
         Column(
             modifier = Modifier
@@ -152,7 +153,8 @@ fun RegistroScreenSimple(
                         },
                         label = { Text("Contraseña") },
                         singleLine = true,
-                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
+                        //Se alternan los cambios de ocultar y mostrar contraseña
+                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = errPass != null,
                         supportingText = { errPass?.let { Text(it) } },
                         trailingIcon = {
@@ -183,7 +185,7 @@ fun RegistroScreenSimple(
                         },
                         label = { Text("Repite contraseña") },
                         singleLine = true,
-                        visualTransformation = if (showPass2) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
+                        visualTransformation = if (showPass2) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = errPass2 != null,
                         supportingText = { errPass2?.let { Text(it) } },
                         trailingIcon = {
@@ -227,6 +229,7 @@ fun RegistroScreenSimple(
                             }
                             if (!ok) return@Button
 
+                            //saveUserIfNew devuelve un booleano, verificando de que el email no esté registrado
                             val guardado = saveUserIfNew(ctx, nombre.trim(), email.trim(), pass)
                             if (!guardado) {
                                 errEmail = "Este correo ya está registrado"
@@ -272,10 +275,13 @@ private fun saveUserIfNew(
     email: String,
     pass: String
 ): Boolean {
+    //Accede a SharedPreferences
     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
+    //Busca el String bajo la clave "usuarios".
+    //Divide el string por el carácter ; para obtener una lista de usuarios individuales.
     val raw = sp.getString("usuarios", "") ?: ""
     val entries = raw.split(";").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
-
+    //busca en la lista si algún usuario (después de dividirlo por |) ya tiene el mismo email.
     val exists = entries.any {
         val parts = it.split("|")
         parts.isNotEmpty() && parts[0] == email

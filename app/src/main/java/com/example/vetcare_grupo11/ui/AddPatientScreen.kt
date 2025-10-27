@@ -31,7 +31,7 @@ fun AddPatientScreen(
     var especie by remember { mutableStateOf("Perro") } // Perro | Gato
     var raza by remember { mutableStateOf("") }
     var tutor by remember { mutableStateOf("") }
-
+    //Booleano dedicado a controlar el menu desplegable
     var especieExpanded by remember { mutableStateOf(false) }
     val especies = listOf("Perro", "Gato")
 
@@ -56,14 +56,16 @@ fun AddPatientScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
+        //Reutiliza un componente indicando que la pestaña actual es la de PATIENTS.
         bottomBar = {
             SettingsBottomBar(
                 current = MainTab.PATIENTS,
-                onReminders = { /* No reminders needed here */ },
+                onReminders = { },
                 onHome = onGoHome,
                 onPatients = onGoPatients
             )
         }
+        //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     ) { inner ->
         Column(
             modifier = Modifier
@@ -132,13 +134,16 @@ fun AddPatientScreen(
                                 .menuAnchor()
                                 .fillMaxWidth()
                         )
+                        //Es el menu flotante. Solo se muestra si especieExpanded es true.
                         ExposedDropdownMenu(
                             expanded = especieExpanded,
                             onDismissRequest = { especieExpanded = false }
                         ) {
+                            //Crea un DropdownMenuItem para cada especie en la lista
                             especies.forEach { opt ->
                                 DropdownMenuItem(
                                     text = { Text(opt) },
+                                    //Actualiza el estado de especie y se cierra el menu
                                     onClick = {
                                         especie = opt
                                         especieExpanded = false
@@ -169,7 +174,6 @@ fun AddPatientScreen(
                     // Botones
                     Button(
                         onClick = {
-                            // solo UI: armamos el Patient y lo devolvemos
                             val p = Patient(
                                 nombre = nombre.trim(),
                                 especie = especie,
@@ -183,6 +187,7 @@ fun AddPatientScreen(
                             .height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         shape = RoundedCornerShape(16.dp),
+                        //Desabilita el boton si alguno de los campo de textos esta vacio
                         enabled = nombre.isNotBlank() && raza.isNotBlank() && tutor.isNotBlank()
                     ) {
                         Text("Guardar", color = MaterialTheme.colorScheme.onSecondary)

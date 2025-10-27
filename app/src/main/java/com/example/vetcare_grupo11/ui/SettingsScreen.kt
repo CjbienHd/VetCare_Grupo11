@@ -25,15 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * Pantalla de Configuración según tu mockup:
- * - Header teal "Configuración" + engranaje
- * - 3 opciones: Cambiar Tema (switch), Copia Local/Exportar (share), Información (dialog)
- * - Bottom bar igual a la de Home
- */
 @Composable
 fun SettingsScreen(
+    //Booleano para saber si el tema oscuro esta activado o no
     darkTheme: Boolean,
+    //Booleano que si es true muestra el tema claro, si es false, muestra el tema oscuro
     onThemeChange: (Boolean) -> Unit,
     onGoHome: () -> Unit,
     currentTab: MainTab = MainTab.HOME,
@@ -41,6 +37,7 @@ fun SettingsScreen(
     onGoPatients: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
+    //Booleano que si es true muestra la informacion, si es false, no
     var showInfo by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -78,6 +75,7 @@ fun SettingsScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background
+        //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     ) { inner ->
         Column(
             modifier = Modifier
@@ -94,7 +92,9 @@ fun SettingsScreen(
                 text = "Cambiar Tema",
                 trailing = {
                     Switch(
+                        //Muestra el estado del Switch (tema claro o oscuro)
                         checked = darkTheme,
+                        //Cuando se interactua con el switch se invoca la funcion onThemeChange que se encarga de cambiar el tema
                         onCheckedChange = onThemeChange
                     )
                 },
@@ -106,14 +106,17 @@ fun SettingsScreen(
                 icon = { Icon(Icons.Filled.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Copia Local/ Exportar",
                 onClick = {
-                    // Export simple: comparte texto con datos básicos (cumple rúbrica mostrando acción)
+                    // Acceso a SharedPreferences para leer datos guardados de los usuarios
                     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
                     val usuarios = sp.getString("usuarios", "") ?: ""
+                    // Intent para compartir el contenido
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
+                        // Añade el contenido a compartir como EXTRA_TEXT.
                         putExtra(Intent.EXTRA_SUBJECT, "Backup VetCare")
                         putExtra(Intent.EXTRA_TEXT, "Usuarios registrados:\n$usuarios")
                     }
+                    // Abre el selector de aplicaciones para compartir
                     ctx.startActivity(Intent.createChooser(shareIntent, "Compartir copia"))
                 }
             )

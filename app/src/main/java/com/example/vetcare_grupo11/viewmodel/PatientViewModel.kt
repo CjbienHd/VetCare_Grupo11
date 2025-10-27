@@ -10,25 +10,30 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+
+//Define la estructura de los datos de pacientes
 data class Patient(
+    // Id único generado automáticamente
     val id: String = UUID.randomUUID().toString(),
     val nombre: String,
     val especie: String,  // "Perro" | "Gato"
     val raza: String,
     val tutor: String
 )
-
+//Hereda de ViewModel, lo que le permite sobrevivir a cambios de configuración (como girar el teléfono) y ser gestionado por el framework de Android.
 class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
-
+    //Es mutable y privada, solo ViewModel puede modificarla
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
+    //Esta es publia e inmutable, se expone a la UI
     val patients: StateFlow<List<Patient>> = _patients
-
+    //Transoforma la lista de pacientes a un numero(total de pacientes)
     val activeCount: StateFlow<Int> =
         patients.map { it.size }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     init {
-        // 1) Cargar de disco
+        //Cargar el disco para recuperar los pacientes guardados previamente
         val loaded = store.load()
+        //Si no hay pacientes guardados, se cargan los por defecto
         _patients.value = if (loaded.isNotEmpty()) {
             loaded
         } else {
@@ -41,23 +46,22 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
             )
         }
 
-        // 2) Guardar automáticamente ante cambios
+        // Se lanza corrutina para guardar los pacientes cada vez que cambian
         viewModelScope.launch {
+            // Cada vez que se actualiza la lista de pacientes, se guarda, excepto el valor inicial, para queno guarde los datos que se cargaron al inicio
             patients.drop(1).collect { list -> store.save(list) }
         }
     }
-
+    //Crea una nueva lista basada en la lista anterior y se le asigna a la lista mutable de pacientes
     fun addPatient(p: Patient) {
         _patients.value = _patients.value + p
-        // (También se guardará por el colector)
     }
-
+    //Crea una nueva lista basada en la lista anterior y se le asigna a la lista mutable de pacientes
     fun removePatient(id: String) {
         _patients.value = _patients.value.filterNot { it.id == id }
     }
 }
 
-/** Factory para inyectar el store sin acoplar a la UI */
 class PatientsViewModelFactory(private val store: PatientsStore) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
