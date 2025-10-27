@@ -37,11 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vetcare_grupo11.viewmodel.Patient
 
-// Paleta coherente con tu app (usa tu Theme si ya lo tienes configurado)
-private val Teal = Color(0xFF00A9B9)
-private val Coral = Color(0xFFFF6F61)
-private val CardSoft = Color(0xFFE6F4F1)
-
 
 @Composable
 fun PatientsScreen(
@@ -64,30 +59,30 @@ fun PatientsScreen(
                     // Título centrado como en tu login/registro
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
-                            "VetCare Móvil",
-                            color = Color.White,
+                            "VetCare",
+                            color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = onSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Ajustes", tint = Color.White)
+                        Icon(Icons.Outlined.Settings, contentDescription = "Ajustes", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Teal)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPatient,
-                containerColor = Coral,
+                containerColor = MaterialTheme.colorScheme.secondary,
                 shape = CircleShape,
                 modifier = Modifier
                     .size(64.dp)
                     .shadow(8.dp, CircleShape)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar", tint = Color.White)
+                Icon(Icons.Default.Add, contentDescription = "Agregar", tint = MaterialTheme.colorScheme.onSecondary)
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -99,17 +94,18 @@ fun PatientsScreen(
                 onPatients = onGoPatients
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { inner ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // Banda de bienvenida suave (opcional, mismo lenguaje visual)
             Surface(
-                color = CardSoft,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 10.dp)
@@ -124,11 +120,11 @@ fun PatientsScreen(
                     Text(
                         "Pacientes",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "Mis Mascotas",
-                        color = Color.Black.copy(alpha = 0.65f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -162,7 +158,7 @@ fun PatientsScreen(
                 TextButton(onClick = {
                     onRemovePatient(toDelete!!)   // ← callback que borra en el VM
                     toDelete = null
-                }) { Text("Eliminar", color = Coral) }
+                }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = { toDelete = null }) { Text("Cancelar") }
@@ -182,7 +178,7 @@ private fun PatientCard(
 ) {
     Card(
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth()
             .combinedClickable(             // ← aquí el long-press
@@ -201,13 +197,13 @@ private fun PatientCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Teal.copy(alpha = 0.1f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Pets,
                     contentDescription = null,
-                    tint = Teal
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -223,14 +219,14 @@ private fun PatientCard(
                 Text(
                     text = "${patient.especie} • ${patient.raza}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black.copy(alpha = 0.65f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "Tutor: ${patient.tutor}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Black.copy(alpha = 0.55f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -263,14 +259,14 @@ private fun AppBottomBar(
                     imageVector = Icons.Filled.Pets,
                     contentDescription = "Home",
                     tint = if (current == MainTabPatients.HOME)
-                        Coral else MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             label = {
                 Text(
                     "Home",
                     color = if (current == MainTabPatients.HOME)
-                        Coral else MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         )
