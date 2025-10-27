@@ -1,27 +1,33 @@
 package com.example.vetcare_grupo11.data
 
-
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import com.example.vetcare_grupo11.viewmodel.Patient
 
-/** Contrato de persistencia */
+/**
+ * Interfaz de persistencia
+ */
 interface PatientsStore {
-    fun load(): List<Patient>
-    fun save(list: List<Patient>)
+    fun load(): List<Patient>   // carga todos los pacientes guardados
+    fun save(list: List<Patient>) // guarda la lista actual
 }
 
-/** Implementación con SharedPreferences (mismo espíritu que RegistroScreen) */
+/**
+ * Implementación concreta usando SharedPreferences.
+ */
 class SharedPrefsPatientsStore(context: Context) : PatientsStore {
-    private val sp = context.getSharedPreferences("datos_app", Context.MODE_PRIVATE)
-    private val KEY = "patients_json"
 
+    // Abre o crea el archivo de SharedPreferences "datos_app"
+    private val sp = context.getSharedPreferences("datos_app", Context.MODE_PRIVATE)
+    private val KEY = "patients_json" // clave bajo la cual guardo los pacientes
+
+    // Función para leer desde SharedPreferences y convertir el JSON a objetos Patient
     override fun load(): List<Patient> {
-        val raw = sp.getString(KEY, "") ?: ""
-        if (raw.isBlank()) return emptyList()
+        val raw = sp.getString(KEY, "") ?: ""  // obtengo el texto guardado
+        if (raw.isBlank()) return emptyList()  // si no hay nada, retorno lista vacía
         return try {
-            val arr = JSONArray(raw)
+            val arr = JSONArray(raw) // parseo el texto como JSONArray
             buildList {
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
@@ -37,10 +43,12 @@ class SharedPrefsPatientsStore(context: Context) : PatientsStore {
                 }
             }
         } catch (_: Throwable) {
+            // En caso de error, devuelvo lista vacía
             emptyList()
         }
     }
 
+    // Función para guardar la lista de pacientes como JSON
     override fun save(list: List<Patient>) {
         val arr = JSONArray()
         list.forEach { p ->

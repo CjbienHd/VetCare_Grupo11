@@ -1,5 +1,4 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.example.vetcare_grupo11.ui
 
 import androidx.compose.foundation.background
@@ -23,32 +22,35 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// Colores del caso
+// Colores de la app.
 private val Teal = Color(0xFF00A9B9)
 private val Coral = Color(0xFFFF6F61)
 private val CardSoft = Color(0xFFE6F4F1)
 
 @Composable
 fun LoginVisualScreen(
-    onCreateAccount: () -> Unit = {},
-    onLoginOk: () -> Unit = {} // callback opcional para navegar cuando el login sea correcto
+    onCreateAccount: () -> Unit = {}, // callback para ir a Registro
+    onLoginOk: () -> Unit = {}        // callback para navegar cuando el login es correcto
 ) {
+    // Estados del formulario
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
 
-    // NUEVO: estados de validación/feedback
+    // Estados de validación y feedback
     var emailError by remember { mutableStateOf<String?>(null) }
     var passError by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     var loginOk by remember { mutableStateOf(false) }
 
+    // Acceso a contexto y coroutine scope para simular loading
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // Contenedor principal de pantalla con AppBar
     Scaffold(
         topBar = {
-            // AppBar teal como en tu ejemplo
+            // AppBar con título centrado y color principal
             TopAppBar(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -78,19 +80,19 @@ fun LoginVisualScreen(
             ) {
                 Spacer(Modifier.height(24.dp))
 
-                // Tarjetita suave de bienvenida
+                // Tarjeta de bienvenida
                 Surface(
                     color = CardSoft,
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Bienvenido 👋", style = MaterialTheme.typography.titleMedium)
+                        Text("Bienvenido", style = MaterialTheme.typography.titleMedium)
                         Text("Inicia sesión para continuar", color = Color.Black.copy(alpha = 0.65f))
                     }
                 }
 
-                // Card principal del formulario (bordes suaves)
+                // Card que contiene el formulario de login
                 Card(
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -98,16 +100,15 @@ fun LoginVisualScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier
-                            .padding(20.dp),
+                        modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // ======== CORREO =========
+                        // Campo de correo.
                         OutlinedTextField(
                             value = email,
                             onValueChange = {
                                 email = it
-                                emailError = null // limpia error reactivo
+                                emailError = null
                             },
                             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Teal) },
                             label = { Text("Correo") },
@@ -126,12 +127,12 @@ fun LoginVisualScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        // ======== CONTRASEÑA =========
+                        // Campo de contraseña mostrar/ocultar
                         OutlinedTextField(
                             value = password,
                             onValueChange = {
                                 password = it
-                                passError = null // limpia error reactivo
+                                passError = null
                             },
                             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Teal) },
                             label = { Text("Contraseña") },
@@ -157,31 +158,36 @@ fun LoginVisualScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        // Botón coral, ancho completo (con feedback de carga)
+                        // Botón de ingresar
                         Button(
                             onClick = {
-                                // Validaciones básicas (rúbrica IE 2.1.2 / 2.2.1)
                                 var ok = true
+
+                                // Validación de formato de email
                                 if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                                     emailError = "Email inválido"
                                     ok = false
                                 }
+                                // Validación de longitud mínima de contraseña
                                 if (password.length < 6) {
                                     passError = "Mínimo 6 caracteres"
                                     ok = false
                                 }
+                                // Si hay errores, no sigue
                                 if (!ok) return@Button
 
+                                // Simulo carga para feedback visual y experiencia de usuario
                                 loading = true
                                 loginOk = false
+
                                 scope.launch {
-                                    // pequeño delay: feedback visual
-                                    delay(600)
+                                    delay(600) // breve espera para ver el indicador
+                                    // Verificación real de credenciales contra SharedPreferences
                                     val acceso = checkCredentials(ctx, email.trim(), password)
                                     loading = false
                                     if (acceso) {
                                         loginOk = true
-                                        onLoginOk() // deja tu navegación aquí si ya la tienes configurada
+                                        onLoginOk() // aquí se navega a la pantalla principal
                                     } else {
                                         passError = "Credenciales incorrectas"
                                     }
@@ -195,13 +201,14 @@ fun LoginVisualScreen(
                             enabled = !loading
                         ) {
                             if (loading) {
+
                                 CircularProgressIndicator(strokeWidth = 2.dp, color = Color.White)
                             } else {
                                 Text("Ingresar", color = Color.White)
                             }
                         }
 
-                        // Mensaje simple de éxito (visual)
+
                         if (loginOk) {
                             Text(
                                 text = "Inicio de sesión correcto",
@@ -210,18 +217,18 @@ fun LoginVisualScreen(
                             )
                         }
 
+                        // Botón para ir a la pantalla de registro si no tiene cuenta
                         TextButton(
                             onClick = onCreateAccount,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text("Crear cuenta", color = Teal)
                         }
-
                     }
                 }
             }
 
-            // Barra inferior de navegación (decorativa, como tu ejemplo)
+            // Pie de pantalla decorativo
             Surface(
                 color = Color(0xFFE5F1F1),
                 shadowElevation = 8.dp,
@@ -237,7 +244,6 @@ fun LoginVisualScreen(
                         .padding(horizontal = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Placeholder simple
                     Text("·  ·  ·", color = Teal.copy(alpha = 0.6f))
                 }
             }
@@ -246,8 +252,9 @@ fun LoginVisualScreen(
 }
 
 /**
- * Valida contra usuarios guardados en SharedPreferences por el Registro.
- * Formato: "email|pass|nombre;email|pass|nombre;..."
+ * Verifica credenciales contra usuarios guardados en SharedPreferences por la pantalla de Registro.
+ * Estructura: "email|pass|nombre;email|pass|nombre;..."
+ * Devuelve true si encuentra email y contraseña coincidentes.
  */
 private fun checkCredentials(
     ctx: android.content.Context,
@@ -269,5 +276,6 @@ private fun checkCredentials(
 @Preview(showBackground = true)
 @Composable
 fun PreviewLoginVisual() {
+    // Solo para ver el diseño en el Preview de Android Studio
     MaterialTheme { LoginVisualScreen() }
 }

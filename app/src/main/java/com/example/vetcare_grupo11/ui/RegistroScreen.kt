@@ -1,5 +1,4 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.example.vetcare_grupo11.ui
 
 import androidx.compose.foundation.layout.*
@@ -22,7 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.unit.dp
 
 
-// Reutilizo tu paleta
+// Colores personalizados para toda la app
 private val Teal = Color(0xFF00A9B9)
 private val Coral = Color(0xFFFF6F61)
 private val CardSoft = Color(0xFFE6F4F1)
@@ -31,32 +30,39 @@ private val CardSoft = Color(0xFFE6F4F1)
 fun RegistroScreenSimple(
     goLogin: () -> Unit = {}
 ) {
-    // Estados del formulario
+    // Variables del formulario (cada campo tiene su propio estado)
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var pass2 by remember { mutableStateOf("") }
 
-    // Errores reactivos
+    // Variables de error (null = sin error)
     var errNombre by remember { mutableStateOf<String?>(null) }
     var errEmail by remember { mutableStateOf<String?>(null) }
     var errPass by remember { mutableStateOf<String?>(null) }
     var errPass2 by remember { mutableStateOf<String?>(null) }
 
-    // Confirmación
+    // Indica si el usuario fue registrado con éxito
     var registrado by remember { mutableStateOf(false) }
 
+    // Contexto para acceder a SharedPreferences
     val ctx = LocalContext.current
 
+    // Estructura general de la pantalla
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             "Crear cuenta",
                             color = Color.White,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
                         )
                     }
                 },
@@ -74,6 +80,7 @@ fun RegistroScreenSimple(
         ) {
             Spacer(Modifier.height(12.dp))
 
+            // Tarjeta superior con título y subtítulo
             Surface(
                 color = CardSoft,
                 shape = RoundedCornerShape(20.dp),
@@ -81,10 +88,14 @@ fun RegistroScreenSimple(
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Regístrate 📝", style = MaterialTheme.typography.titleMedium)
-                    Text("Completa los datos para crear tu usuario", color = Color.Black.copy(alpha = 0.65f))
+                    Text(
+                        "Completa los datos para crear tu usuario",
+                        color = Color.Black.copy(alpha = 0.65f)
+                    )
                 }
             }
 
+            // Tarjeta principal donde están los campos del formulario
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -95,7 +106,9 @@ fun RegistroScreenSimple(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // ======= NOMBRE =======
+
+                    // Campo de NOMBRE
+                    // Si hay error, muestra mensaje debajo y cambia el borde a rojo
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = {
@@ -118,7 +131,7 @@ fun RegistroScreenSimple(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // ======= EMAIL =======
+                    // Campo de EMAIL
                     OutlinedTextField(
                         value = email,
                         onValueChange = {
@@ -140,10 +153,12 @@ fun RegistroScreenSimple(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Estados para mostrar / ocultar contraseñas
                     var showPass by remember { mutableStateOf(false) }
                     var showPass2 by remember { mutableStateOf(false) }
 
-                    // ======= CONTRASEÑA =======
+                    // Campo de CONTRASEÑA
                     OutlinedTextField(
                         value = pass,
                         onValueChange = {
@@ -152,7 +167,7 @@ fun RegistroScreenSimple(
                         },
                         label = { Text("Contraseña") },
                         singleLine = true,
-                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
+                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = errPass != null,
                         supportingText = { errPass?.let { Text(it) } },
                         trailingIcon = {
@@ -173,8 +188,7 @@ fun RegistroScreenSimple(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
-                    // ======= REPETIR CONTRASEÑA =======
+                    // Campo de REPETIR CONTRASEÑA
                     OutlinedTextField(
                         value = pass2,
                         onValueChange = {
@@ -183,7 +197,7 @@ fun RegistroScreenSimple(
                         },
                         label = { Text("Repite contraseña") },
                         singleLine = true,
-                        visualTransformation = if (showPass2) VisualTransformation.None else PasswordVisualTransformation(), // NUEVO
+                        visualTransformation = if (showPass2) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = errPass2 != null,
                         supportingText = { errPass2?.let { Text(it) } },
                         trailingIcon = {
@@ -204,11 +218,13 @@ fun RegistroScreenSimple(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
+                    // Botón principal de "Registrarme"
+                    // Acá se hacen todas las validaciones antes de guardar
                     Button(
                         onClick = {
-
                             var ok = true
+
+                            // Validaciones básicas
                             if (nombre.trim().length < 3) {
                                 errNombre = "Mínimo 3 caracteres"
                                 ok = false
@@ -225,14 +241,19 @@ fun RegistroScreenSimple(
                                 errPass2 = "No coinciden"
                                 ok = false
                             }
+
+                            // Si alguna validación falla, corta la ejecución
                             if (!ok) return@Button
 
+                            // Si todo está bien, guarda el usuario en SharedPreferences
                             val guardado = saveUserIfNew(ctx, nombre.trim(), email.trim(), pass)
+
+                            // Si ya existía el correo, muestra error
                             if (!guardado) {
                                 errEmail = "Este correo ya está registrado"
                             } else {
                                 registrado = true
-                                // Vuelve al login
+                                // Si se guardó correctamente, vuelve al login
                                 goLogin()
                             }
                         },
@@ -245,6 +266,7 @@ fun RegistroScreenSimple(
                         Text("Registrarme", color = Color.White)
                     }
 
+                    // Mensaje de confirmación si el registro fue exitoso
                     if (registrado) {
                         Text(
                             text = "Registro exitoso",
@@ -253,6 +275,7 @@ fun RegistroScreenSimple(
                         )
                     }
 
+                    // Botón para volver al login si ya tiene cuenta
                     TextButton(
                         onClick = goLogin,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -265,26 +288,34 @@ fun RegistroScreenSimple(
     }
 }
 
-/** Guarda usuario si NO existe el email. Formato: email|pass|nombre;email|pass|nombre;... */
+// Función que guarda un nuevo usuario en SharedPreferences
+// Si el correo ya existe, no lo guarda y retorna false
 private fun saveUserIfNew(
     ctx: android.content.Context,
     nombre: String,
     email: String,
     pass: String
 ): Boolean {
+    // Abre o crea SharedPreferences llamado "datos_app"
     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
+
+    // Obtiene todos los usuarios guardados en formato texto
     val raw = sp.getString("usuarios", "") ?: ""
     val entries = raw.split(";").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
 
+    // Verifica si el email ya está registrado
     val exists = entries.any {
         val parts = it.split("|")
         parts.isNotEmpty() && parts[0] == email
     }
     if (exists) return false
 
-    // Formato simple: email|pass|nombre
+    // Si no existe, agrega el nuevo usuario en formato "email|pass|nombre"
     entries.add("$email|$pass|$nombre")
+
     val joined = entries.joinToString(";")
+
+    // Guarda la cadena completa en SharedPreferences
     sp.edit().putString("usuarios", joined).apply()
     return true
 }

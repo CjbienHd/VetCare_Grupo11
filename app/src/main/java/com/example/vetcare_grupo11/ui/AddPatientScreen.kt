@@ -2,8 +2,6 @@
 
 package com.example.vetcare_grupo11.ui
 
-
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,20 +20,23 @@ import com.example.vetcare_grupo11.viewmodel.Patient
 
 @Composable
 fun AddPatientScreen(
-    onBack: () -> Unit,
-    onSave: (Patient) -> Unit,
-    onGoHome: () -> Unit,
-    onGoPatients: () -> Unit
+    onBack: () -> Unit,                  // volver a la pantalla anterior (patients)
+    onSave: (Patient) -> Unit,           // callback: el VM agrega y persiste
+    onGoHome: () -> Unit,                // por si quiero saltar a Home desde la bottom bar
+    onGoPatients: () -> Unit             // por si quiero volver a Patients desde la bottom bar
 ) {
+    // Estados locales del formulario
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("Perro") } // Perro | Gato
     var raza by remember { mutableStateOf("") }
     var tutor by remember { mutableStateOf("") }
 
+    // Control del menú desplegable
     var especieExpanded by remember { mutableStateOf(false) }
     val especies = listOf("Perro", "Gato")
 
     Scaffold(
+        // App bar con botón de volver
         topBar = {
             TopAppBar(
                 title = {
@@ -49,6 +50,7 @@ fun AddPatientScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
+                        // Icono genérico para “volver”. Mantengo coherencia visual con la app.
                         Icon(Icons.Default.Badge, contentDescription = "Volver", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
@@ -56,10 +58,12 @@ fun AddPatientScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
+
+        // (Home / Patients)
         bottomBar = {
             SettingsBottomBar(
-                current = MainTab.PATIENTS,
-                onReminders = { /* No reminders needed here */ },
+                current = MainTab.PATIENTS, // tab activo: Patients
+                onReminders = { /* aquí no hay recordatorios */ },
                 onHome = onGoHome,
                 onPatients = onGoPatients
             )
@@ -75,7 +79,7 @@ fun AddPatientScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // Tarjeta de cabecera
+            // Encabezado visual del formulario
             Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(20.dp)) {
                 Column(
                     Modifier
@@ -96,7 +100,7 @@ fun AddPatientScreen(
                 }
             }
 
-            // Card del formulario
+            // Card con los campos del formulario
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -107,6 +111,7 @@ fun AddPatientScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    // Nombre del paciente.
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = { nombre = it },
@@ -116,7 +121,7 @@ fun AddPatientScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Selector de especie (exposed dropdown)
+                    // Selector de especie
                     ExposedDropdownMenuBox(
                         expanded = especieExpanded,
                         onExpandedChange = { especieExpanded = !especieExpanded }
@@ -148,6 +153,7 @@ fun AddPatientScreen(
                         }
                     }
 
+                    // Raza.
                     OutlinedTextField(
                         value = raza,
                         onValueChange = { raza = it },
@@ -157,6 +163,7 @@ fun AddPatientScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    // Tutor (dueño).
                     OutlinedTextField(
                         value = tutor,
                         onValueChange = { tutor = it },
@@ -166,10 +173,9 @@ fun AddPatientScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Botones
+                    // Guardar y Cancelar
                     Button(
                         onClick = {
-                            // solo UI: armamos el Patient y lo devolvemos
                             val p = Patient(
                                 nombre = nombre.trim(),
                                 especie = especie,
@@ -183,6 +189,7 @@ fun AddPatientScreen(
                             .height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         shape = RoundedCornerShape(16.dp),
+
                         enabled = nombre.isNotBlank() && raza.isNotBlank() && tutor.isNotBlank()
                     ) {
                         Text("Guardar", color = MaterialTheme.colorScheme.onSecondary)

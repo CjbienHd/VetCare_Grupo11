@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.example.vetcare_grupo11.ui
 
 import android.content.Intent
@@ -25,25 +24,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * Pantalla de Configuración según tu mockup:
- * - Header teal "Configuración" + engranaje
- * - 3 opciones: Cambiar Tema (switch), Copia Local/Exportar (share), Información (dialog)
- * - Bottom bar igual a la de Home
- */
 @Composable
 fun SettingsScreen(
-    darkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit,
-    onGoHome: () -> Unit,
+    darkTheme: Boolean,               // estado actual del tema (oscuro o claro)
+    onThemeChange: (Boolean) -> Unit, // callback para cambiar el tema
+    onGoHome: () -> Unit,             // navegación de vuelta a Home
     currentTab: MainTab = MainTab.HOME,
     onGoReminders: () -> Unit = {},
     onGoPatients: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
-    var showInfo by remember { mutableStateOf(false) }
+    var showInfo by remember { mutableStateOf(false) } // control del diálogo de información
 
     Scaffold(
+        // Barra superior con título y engranaje
         topBar = {
             TopAppBar(
                 title = {
@@ -69,6 +63,8 @@ fun SettingsScreen(
                 )
             )
         },
+
+        // Barra inferior
         bottomBar = {
             SettingsBottomBar(
                 current = currentTab,
@@ -88,7 +84,8 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // === Card 1: Cambiar Tema ===
+
+            // Permite alternar entre claro y oscuro
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Cambiar Tema",
@@ -101,12 +98,12 @@ fun SettingsScreen(
                 onClick = { onThemeChange(!darkTheme) }
             )
 
-            // === Card 2: Copia Local / Exportar ===
+            // Exportar Datos
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Copia Local/ Exportar",
                 onClick = {
-                    // Export simple: comparte texto con datos básicos (cumple rúbrica mostrando acción)
+                    // compartir usuarios guardados
                     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
                     val usuarios = sp.getString("usuarios", "") ?: ""
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -118,14 +115,14 @@ fun SettingsScreen(
                 }
             )
 
-            // === Card 3: Información ===
+            // Información
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Información",
                 onClick = { showInfo = true }
             )
 
-            // Dialog información
+            // Información básica de la app
             if (showInfo) {
                 AlertDialog(
                     onDismissRequest = { showInfo = false },
@@ -141,12 +138,11 @@ fun SettingsScreen(
                 )
             }
 
-            Spacer(Modifier.height(72.dp)) // espacio para bottom bar
+            Spacer(Modifier.height(72.dp)) // espacio para que el contenido no choque con la BottomBar
         }
     }
 }
 
-/** Fila-card como en el mockup: icono coral a la izquierda, texto y trailing opcional */
 @Composable
 private fun SettingsRowCard(
     icon: @Composable () -> Unit,
@@ -189,8 +185,6 @@ private fun SettingsRowCard(
         }
     }
 }
-
-/** Bottom bar igual a Home */
 @Composable
 fun SettingsBottomBar(
     current: MainTab,
@@ -199,12 +193,15 @@ fun SettingsBottomBar(
     onPatients: () -> Unit
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+        // Citas
         NavigationBarItem(
             selected = current == MainTab.REMINDERS,
             onClick = onReminders,
             icon = { Icon(imageVector = Icons.Outlined.Notifications, contentDescription = "Citas") },
             label = { Text("Citas") }
         )
+
+        // Home
         NavigationBarItem(
             selected = current == MainTab.HOME,
             onClick = onHome,
@@ -215,8 +212,17 @@ fun SettingsBottomBar(
                     tint = if (current == MainTab.HOME) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            label = { Text("Home", color = if (current == MainTab.HOME) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant) }
+            label = {
+                Text(
+                    "Home",
+                    color = if (current == MainTab.HOME)
+                        MaterialTheme.colorScheme.secondary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         )
+
+        // Pacientes
         NavigationBarItem(
             selected = current == MainTab.PATIENTS,
             onClick = onPatients,

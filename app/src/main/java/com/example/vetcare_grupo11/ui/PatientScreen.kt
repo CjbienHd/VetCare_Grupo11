@@ -2,8 +2,6 @@
 
 package com.example.vetcare_grupo11.ui
 
-
-
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,26 +35,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vetcare_grupo11.viewmodel.Patient
 
+// Pantalla lista de pacientes.
+// MVVM: el estado vive en el VM; esta pantalla solo muestra y dispara callbacks.
 
 @Composable
 fun PatientsScreen(
-    patients: List<Patient>,              // ← recibe la lista del VM
-    onAddPatient: () -> Unit,
-    onPatientClick: (Patient) -> Unit = {},
+    patients: List<Patient>,              // estado observable que viene del VM
+    onAddPatient: () -> Unit,             // navegar a "add_patient"
+    onPatientClick: (Patient) -> Unit = {},  // abrir detalle si lo implemento
     onGoReminders: () -> Unit = {},
     onGoHome: () -> Unit = {},
     onSettings: () -> Unit = {},
-    onRemovePatient: (Patient) -> Unit,
+    onRemovePatient: (Patient) -> Unit,   // elimina en el VM
     onGoPatients: () -> Unit = {},
     currentTab: MainTabPatients = MainTabPatients.PATIENTS
 ) {
+    // Manejo simple de confirmación de borrado
     var toDelete: Patient? by remember { mutableStateOf(null) }
-    Scaffold(
 
+    Scaffold(
+        //título centrado y acceso a Settings
         topBar = {
             TopAppBar(
                 title = {
-                    // Título centrado como en tu login/registro
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
                             "VetCare",
@@ -73,6 +74,8 @@ fun PatientsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },
+
+        // alta de paciente
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPatient,
@@ -86,6 +89,8 @@ fun PatientsScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
+
+        // BottomBar local
         bottomBar = {
             AppBottomBar(
                 current = currentTab,
@@ -94,6 +99,7 @@ fun PatientsScreen(
                 onPatients = onGoPatients
             )
         },
+
         containerColor = MaterialTheme.colorScheme.background
     ) { inner ->
 
@@ -103,7 +109,7 @@ fun PatientsScreen(
                 .padding(inner)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Banda de bienvenida suave (opcional, mismo lenguaje visual)
+            // Encabezado suave con título y subtítulo
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(20.dp),
@@ -130,25 +136,26 @@ fun PatientsScreen(
                 }
             }
 
-            // Lista de pacientes
+            // Lista reactiva. Claves estables por id
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 96.dp) // espacio para FAB/bottombar
+                contentPadding = PaddingValues(bottom = 96.dp) // espacio para FAB
             ) {
                 items(patients, key = { it.id }) { p ->
                     PatientCard(
                         patient = p,
-                        onClick = { onPatientClick(p) },
-                                onLongPress = { toDelete = p }
+                        onClick = { onPatientClick(p) },   // selección para detalle
+                        onLongPress = { toDelete = p }      // abre confirmación de borrado
                     )
                 }
-
             }
         }
     }
+
+    // Diálogo de confirmación
     if (toDelete != null) {
         AlertDialog(
             onDismissRequest = { toDelete = null },
@@ -156,7 +163,7 @@ fun PatientsScreen(
             text  = { Text("¿Seguro que deseas eliminar a \"${toDelete!!.nombre}\"?") },
             confirmButton = {
                 TextButton(onClick = {
-                    onRemovePatient(toDelete!!)   // ← callback que borra en el VM
+                    onRemovePatient(toDelete!!)   // elimina en ViewModel (y persiste)
                     toDelete = null
                 }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
             },
@@ -167,8 +174,6 @@ fun PatientsScreen(
     }
 }
 
-
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PatientCard(
@@ -176,12 +181,14 @@ private fun PatientCard(
     onClick: () -> Unit,
     onLongPress: () -> Unit
 ) {
+    // Card con combinedClickable: click abre detalle, long-press pide borrar.
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        modifier = Modifier.fillMaxWidth()
-            .combinedClickable(             // ← aquí el long-press
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongPress
             )
@@ -192,7 +199,6 @@ private fun PatientCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar simple con icono de especie
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -209,6 +215,7 @@ private fun PatientCard(
 
             Spacer(Modifier.width(12.dp))
 
+            // Columna con datos clave
             Column(Modifier.weight(1f)) {
                 Text(
                     text = patient.nombre,
@@ -231,12 +238,10 @@ private fun PatientCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
         }
     }
 }
 
-/** Bottom bar estilo app (idéntico a tu Home, pero local para esta pantalla) */
 @Composable
 private fun AppBottomBar(
     current: MainTabPatients,
@@ -279,5 +284,5 @@ private fun AppBottomBar(
     }
 }
 
-// Tabs para marcar el seleccionado en el bottom bar
+// Enum de tabs para esta pantalla
 enum class MainTabPatients { REMINDERS, HOME, PATIENTS }
