@@ -27,7 +27,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.vetcare_grupo11.ui.LoadingScreen
 import com.example.vetcare_grupo11.ui.MainScreen
-import com.example.vetcare_grupo11.viewmodel.Patient
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.vetcare_grupo11.data.SharedPrefsPatientsStore
+import com.example.vetcare_grupo11.viewmodel.PatientsViewModelFactory
 
 
 @Composable
@@ -36,8 +39,10 @@ fun AppNavigation(
     darkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit
 ) {
-
-    val patientsVm: PatientsViewModel = viewModel()
+    val ctx = LocalContext.current
+    val patientsVm: PatientsViewModel = viewModel(
+        factory = PatientsViewModelFactory(SharedPrefsPatientsStore(ctx))
+    )
     // Ruta actual
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: "login"
@@ -139,12 +144,7 @@ fun AppNavigation(
                     val patients by patientsVm.patients.collectAsState()
                     PatientsScreen(
                         patients = patients,
-                        onAddPatient = {
-                            // ejemplo de alta rápida:
-                            patientsVm.addPatient(
-                                Patient(nombre = "Nuevo", especie = "Perro", raza = "Mestizo", tutor = "—")
-                            )
-                        },
+                        onAddPatient = { navController.navigate("add_patient") },
                         onPatientClick = { /* detalle si quieres */ },
                         onRemovePatient = { patientsVm.removePatient(it.id) },   // ← AQUÍ BORRA
                         onGoHome = { navController.navigate("main") },
@@ -152,6 +152,15 @@ fun AppNavigation(
                         onGoReminders = { /* ... */ },
                         onSettings = { /* ... */ },
                         currentTab = MainTabPatients.PATIENTS
+                    )
+                }
+                composable("add_patient") {
+                    AddPatientScreen(
+                        onBack = { navController.popBackStack() },
+                        onSave = { p ->
+                            patientsVm.addPatient(p)       // agrega al VM compartido
+                            navController.popBackStack()   // vuelve a Patients
+                        }
                     )
                 }
             }
