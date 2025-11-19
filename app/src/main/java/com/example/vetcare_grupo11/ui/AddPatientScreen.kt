@@ -19,14 +19,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.vetcare_grupo11.viewmodel.Patient
+import java.util.UUID
 
 @Composable
 fun AddPatientScreen(
+    patientToEdit: Patient?,
     onBack: () -> Unit,
     onSave: (Patient) -> Unit,
     onGoHome: () -> Unit,
     onGoPatients: () -> Unit
 ) {
+    val isEditMode = patientToEdit != null // Determina si estamos en modo edición
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("Perro") } // Perro | Gato
     var raza by remember { mutableStateOf("") }
@@ -35,18 +38,19 @@ fun AddPatientScreen(
     var especieExpanded by remember { mutableStateOf(false) }
     val especies = listOf("Perro", "Gato")
 
+    LaunchedEffect(key1 = patientToEdit) {
+        if (isEditMode) {
+            nombre = patientToEdit?.nombre ?: ""
+            especie = patientToEdit?.especie ?: "Perro"
+            raza = patientToEdit?.raza ?: ""
+            tutor = patientToEdit?.tutor ?: ""
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "VetCare Móvil",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                    }
-                },
+                title = { Text(if (isEditMode) "Editar Paciente" else "Agregar Paciente") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.Badge, contentDescription = "Volver", tint = MaterialTheme.colorScheme.onPrimary)
@@ -86,7 +90,7 @@ fun AddPatientScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Agregar paciente 🐾",
+                        text = if (isEditMode) "Modificar paciente ✍️" else "Agregar paciente 🐾",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -176,6 +180,7 @@ fun AddPatientScreen(
                     Button(
                         onClick = {
                             val p = Patient(
+                                id = patientToEdit?.id ?: UUID.randomUUID().toString(),
                                 nombre = nombre.trim(),
                                 especie = especie,
                                 raza = raza.trim(),
@@ -191,7 +196,7 @@ fun AddPatientScreen(
                         //Desabilita el boton si alguno de los campo de textos esta vacio
                         enabled = nombre.isNotBlank() && raza.isNotBlank() && tutor.isNotBlank()
                     ) {
-                        Text("Guardar", color = MaterialTheme.colorScheme.onSecondary)
+                        Text(if (isEditMode) "Actualizar" else "Guardar")
                     }
 
                     TextButton(

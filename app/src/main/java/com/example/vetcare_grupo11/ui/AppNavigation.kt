@@ -28,12 +28,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.vetcare_grupo11.ui.LoadingScreen
 import com.example.vetcare_grupo11.ui.MainScreen
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vetcare_grupo11.data.SharedPrefsPatientsStore
 import com.example.vetcare_grupo11.viewmodel.PatientsViewModelFactory
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 private val Teal = Color(0xFF00A9B9)
 private val TealDark = Color(0xFF0093A2)
@@ -182,7 +183,9 @@ fun AppNavigation(
                     PatientsScreen(
                         patients = patients,
                         onAddPatient = { navController.navigate("add_patient") },
-                        onPatientClick = { },
+                        onPatientClick = { patient ->
+                            navController.navigate("add_patient?id=${patient.id}")
+                        },
                         onRemovePatient = { patientsVm.removePatient(it.id) },
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { },
@@ -191,11 +194,26 @@ fun AppNavigation(
                         currentTab = MainTabPatients.PATIENTS
                     )
                 }
-                composable("add_patient") {
+
+                composable(
+                    route = "add_patient?id={id}",
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType
+                        nullable = true
+                    })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id")
+                    val patient = id?.let { patientsVm.getPatient(it) }
+
                     AddPatientScreen(
+                        patientToEdit = patient,
                         onBack = { navController.popBackStack() },
                         onSave = { p ->
-                            patientsVm.addPatient(p)
+                            if (patient == null) {
+                                patientsVm.addPatient(p)
+                            } else {
+                                patientsVm.updatePatient(p)
+                            }
                             navController.popBackStack()
                         },
                         onGoHome = { navController.navigate("main") },

@@ -60,6 +60,24 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
     fun removePatient(id: String) {
         _patients.value = _patients.value.filterNot { it.id == id }
     }
+
+    // Dentro de la clase PatientsViewModel
+
+    fun updatePatient(patient: Patient) {
+        _patients.value = _patients.value.map {
+            if (it.id == patient.id) {
+                // Si encontramos el paciente por su ID, lo reemplazamos por el nuevo
+                patient
+            } else {
+                // Si no, dejamos el que ya estaba
+                it
+            }
+        }
+    }
+
+    fun getPatient(id: String): Patient? {
+        return patients.value.find { it.id == id }
+    }
 }
 
 class PatientsViewModelFactory(private val store: PatientsStore) : ViewModelProvider.Factory {
