@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -61,10 +62,17 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended:<version>")
     implementation("androidx.compose.material:material-icons-extended")
+    // Firebase BOM (para manejar versiones)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+
+    // Firestore (BD en la nube)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Para poder usar .await() con corutinas
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+
 
 
 
 
 }
-
-

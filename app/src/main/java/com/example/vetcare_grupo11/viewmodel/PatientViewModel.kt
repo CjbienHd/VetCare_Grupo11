@@ -5,6 +5,7 @@ package com.example.vetcare_grupo11.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.vetcare_grupo11.data.FirebasePatientsSync
 import com.example.vetcare_grupo11.data.PatientsStore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,6 +23,9 @@ data class Patient(
 )
 //Hereda de ViewModel, lo que le permite sobrevivir a cambios de configuración (como girar el teléfono) y ser gestionado por el framework de Android.
 class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
+
+    private val remote = FirebasePatientsSync()   // 👈 nueva línea
+
     //Es mutable y privada, solo ViewModel puede modificarla
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
     //Esta es publica e inmutable, se expone a la UI
@@ -31,13 +35,12 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
         patients.map { it.size }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     init {
-        //Cargar el disco para recuperar los pacientes guardados previamente
-        val loaded = store.load()
-        //Si no hay pacientes guardados, se cargan los por defecto
-        _patients.value = if (loaded.isNotEmpty()) {
-            loaded
+        // 1) Cargar lo que haya en local (SharedPreferences)
+        val loadedLocal = store.load()
+        _patients.value = if (loadedLocal.isNotEmpty()) {
+            loadedLocal
         } else {
-            // Lista por defecto si no hay nada guardado
+            // tu lista por defecto:
             listOf(
                 Patient(nombre = "Luna",  especie = "Gato",  raza = "Doméstico de pelo corto", tutor = "María Gómez"),
                 Patient(nombre = "Rocky", especie = "Perro", raza = "Labrador",                tutor = "Juan Pérez"),
@@ -46,10 +49,29 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
             )
         }
 
-        // Se lanza corrutina para guardar los pacientes cada vez que cambian
+        // 2) En segundo plano, intentar cargar desde Firebase
         viewModelScope.launch {
-            // Cada vez que se actualiza la lista de pacientes, se guarda, excepto el valor inicial, para que no guarde los datos que se cargaron al inicio
-            patients.drop(1).collect { list -> store.save(list) }
+            try {
+                val remotePatients = remote.downloadPatients()
+                if (remotePatients.isNotEmpty()) {
+                    // Sobrescribe con los datos de la nube
+                    _patients.value = remotePatients
+                    // Y guarda también en local
+                    store.save(remotePatients)
+                }
+            } catch (e: Exception) {
+                // Si falla Firebase, te quedas con lo local sin romper la app
+            }
+        }
+
+        // 3) Cada vez que cambian los pacientes, guarda en local y sube a Firebase
+        viewModelScope.launch {
+            patients
+                .drop(1) // ignorar el valor inicial
+                .collect { list ->
+                    store.save(list)          // SharedPreferences
+                    list.forEach { remote.uploadPatient(it) }  // Firebase
+                }
         }
     }
     //Crea una nueva lista basada en la lista anterior y se le asigna a la lista mutable de pacientes
@@ -59,6 +81,7 @@ class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
     //Crea una nueva lista basada en la lista anterior y se le asigna a la lista mutable de pacientes
     fun removePatient(id: String) {
         _patients.value = _patients.value.filterNot { it.id == id }
+        remote.deletePatient(id) // 👈 borra en la nube
     }
 
     // Dentro de la clase PatientsViewModel
