@@ -71,6 +71,12 @@ dependencies {
     // Para poder usar .await() con corutinas
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("io.mockk:mockk:1.13.12")
+
+
 
 
 

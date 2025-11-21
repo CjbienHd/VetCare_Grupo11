@@ -22,17 +22,19 @@ data class Patient(
     val tutor: String
 )
 //Hereda de ViewModel, lo que le permite sobrevivir a cambios de configuración (como girar el teléfono) y ser gestionado por el framework de Android.
-class PatientsViewModel(private val store: PatientsStore) : ViewModel() {
-
-    private val remote = FirebasePatientsSync()   // 👈 nueva línea
+class PatientsViewModel(
+    private val store: PatientsStore,
+    private val remote: FirebasePatientsSync
+) : ViewModel() {
 
     //Es mutable y privada, solo ViewModel puede modificarla
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
     //Esta es publica e inmutable, se expone a la UI
     val patients: StateFlow<List<Patient>> = _patients
     //Transoforma la lista de pacientes a un numero(total de pacientes)
-    val activeCount: StateFlow<Int> =
-        patients.map { it.size }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    val activeCount: StateFlow<Int> = patients
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     init {
         // 1) Cargar lo que haya en local (SharedPreferences)
@@ -107,6 +109,6 @@ class PatientsViewModelFactory(private val store: PatientsStore) : ViewModelProv
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         require(modelClass.isAssignableFrom(PatientsViewModel::class.java))
-        return PatientsViewModel(store) as T
+        return PatientsViewModel(store, FirebasePatientsSync()) as T
     }
 }
