@@ -70,6 +70,14 @@ dependencies {
 
     // Para poder usar .await() con corutinas
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    // Convertidor JSON (Gson)
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // Coroutines (si no las tienes)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.kotest:kotest-assertions-core:5.9.0")

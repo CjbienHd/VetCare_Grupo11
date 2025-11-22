@@ -146,7 +146,7 @@ fun PatientsScreen(
                 contentPadding = PaddingValues(bottom = 96.dp) // espacio para FAB/bottombar
             ) {
                 //Usa el id como clave unica para pacientes
-                items(patients, key = { it.id }) { p ->
+                items(patients, key = {  p -> p.id ?: p.hashCode() }) { p ->
                     PatientCard(
                         patient = p,
                         //combinedClickable permite asignar distintas acciones dependiendo de los tipos de clicks

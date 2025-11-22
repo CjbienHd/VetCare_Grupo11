@@ -25,6 +25,8 @@ class FirebasePatientsSync {
 
     // Sube 1 paciente (crear/actualizar)
     fun uploadPatient(p: Patient) {
+
+        val id = p.id ?: return
         val data = mapOf(
             "id" to p.id,
             "nombre" to p.nombre,
