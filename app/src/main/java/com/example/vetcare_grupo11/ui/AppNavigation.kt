@@ -35,6 +35,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.vetcare_grupo11.viewmodel.AppointmentsViewModel
+import androidx.compose.runtime.collectAsState
+
 
 private val Teal = Color(0xFF00A9B9)
 private val TealDark = Color(0xFF0093A2)
@@ -62,15 +65,14 @@ fun AppNavigation(
     onThemeChange: (Boolean) -> Unit
 ) {
     val ctx = LocalContext.current
-    //Se crea instancia de PatientsViewModel
     val patientsVm: PatientsViewModel = viewModel(
         factory = PatientsViewModelFactory(SharedPrefsPatientsStore(ctx))
     )
-    // Ruta actual
+    val appointmentsVm: AppointmentsViewModel = viewModel()
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: "login"
 
-    // Recordar ruta anterior para decidir sentido de la animación
     var lastRoute by remember { mutableStateOf(currentRoute) }
     val forward = remember(currentRoute, lastRoute) {
         lastRoute == "login" && currentRoute == "register"
@@ -78,40 +80,28 @@ fun AppNavigation(
     LaunchedEffect(currentRoute) { lastRoute = currentRoute }
 
     AnimatedContent(
-        //Al cambiar este valor se actualiza la pantalla animando la transicion
         targetState = currentRoute,
-        //Aqui se define la animacion
         transitionSpec = {
             val dur = 650
             val ease = FastOutSlowInEasing
             if (forward) {
-                //Si la navegacion es hacia "adelante" la pantalla se mueve hacia la derecha si no, entonces se mueve hacia la izquierda
                 (slideInHorizontally(
-                    //La pantalla se mueve horizontalmente
                     initialOffsetX = { full -> (full * 0.9f).toInt() },
                     animationSpec = tween(dur, easing = ease)
-                    //Cambia la opacidad de la pantalla de 0% a 100%
                 ) + fadeIn(
                     animationSpec = tween(dur, easing = ease),
                     initialAlpha = 0.0f
-                    //La pantalla cambia de tamaño
                 ) + scaleIn(
                     initialScale = 0.98f,
                     animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
-
-                    //Permite definir 2 conjuntos de animacion al mismo tiempo
-                    //para que salga lo viejo y entre lo nuevo
                 )) togetherWith
-                        //La pantalla vieja se desliza para dejar espacio
                         (slideOutHorizontally(
                             targetOffsetX = { fullWidth -> -fullWidth / 2 },
                             animationSpec = tween(250)
-                            //Mientras la pantalla vieja se va, esta se desvanece
                         ) + fadeOut())
             } else {
-                // Animación: Registro -> Login (la nueva pantalla entra desde la izquierda)
                 (slideInHorizontally(
-                    initialOffsetX = { full -> -(full * 0.9f).toInt() }, // Cambiado a negativo para que entre desde la izquierda
+                    initialOffsetX = { full -> -(full * 0.9f).toInt() },
                     animationSpec = tween(dur, easing = ease)
                 ) + fadeIn(
                     animationSpec = tween(dur, easing = ease),
@@ -156,14 +146,16 @@ fun AppNavigation(
                     LoadingScreen(navController = navController)
                 }
                 composable("main") {
-                    //Obtiene la lista de Pacientes
                     val patients by patientsVm.patients.collectAsState()
+                    val appointments by appointmentsVm.appointments.collectAsState()
+
                     MainScreen(
-                        //Muestra la cantidad de pacientes en la lista
                         pacientesActivos = patients.size,
                         onGoSettings = { navController.navigate("settings") },
                         onGoPatients = { navController.navigate("patients") },
-                        proximasCitas = 0,
+                        onGoReminders = { navController.navigate("appointments") }, // Conectado
+                        onFabClick = { navController.navigate("appointment_form") },      // Conectado
+                        proximasCitas = appointments.size,
                         vacunasPendientes = 0
                     )
                 }
@@ -174,29 +166,27 @@ fun AppNavigation(
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { navController.navigate("patients") }
                     )
-
-
                 }
 
                 composable("patients") {
                     val patients by patientsVm.patients.collectAsState()
                     PatientsScreen(
                         patients = patients,
-                        onAddPatient = { navController.navigate("add_patient") },
+                        onAddPatient = { navController.navigate("patient_form") },
                         onPatientClick = { patient ->
-                            navController.navigate("add_patient?id=${patient.id}")
+                            navController.navigate("patient_form?id=${patient.id}")
                         },
                         onRemovePatient = { patientsVm.removePatient(it.id) },
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { },
-                        onGoReminders = {  },
+                        onGoReminders = { navController.navigate("appointments") },
                         onSettings = { navController.navigate("settings") },
                         currentTab = MainTabPatients.PATIENTS
                     )
                 }
 
                 composable(
-                    route = "add_patient?id={id}",
+                    route = "patient_form?id={id}", // Ruta única para el formulario de pacientes
                     arguments = listOf(navArgument("id") {
                         type = NavType.StringType
                         nullable = true
@@ -218,6 +208,44 @@ fun AppNavigation(
                         },
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { navController.navigate("patients") }
+                    )
+                }
+
+                composable("appointments") {
+                    val appointments by appointmentsVm.appointments.collectAsState()
+
+                    AppointmentsScreen(
+                        appointments = appointments,
+                        onAddAppointment = { navController.navigate("appointment_form") },
+                        onAppointmentClick = { cita ->
+                            navController.navigate("appointment_form?id=${cita.id}")
+                        },
+                        onRemoveAppointment = { appointmentsVm.removeAppointment(it.id) },
+                        onGoHome = { navController.navigate("main") }
+                    )
+                }
+
+                composable(
+                    route = "appointment_form?id={id}", // Ruta única para el formulario de citas
+                    arguments = listOf(navArgument("id") {
+                        type = NavType.StringType
+                        nullable = true
+                    })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getString("id")
+                    val cita = id?.let { appointmentsVm.getAppointment(it) }
+
+                    AddAppointmentScreen(
+                        appointmentToEdit = cita,
+                        onSave = { a ->
+                            if (cita == null) {
+                                appointmentsVm.addAppointment(a)
+                            } else {
+                                appointmentsVm.updateAppointment(a)
+                            }
+                            navController.popBackStack()
+                        },
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }

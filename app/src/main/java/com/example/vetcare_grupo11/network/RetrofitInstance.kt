@@ -5,12 +5,20 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
 
-    val api: PatientApiService by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(ApiConfig.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(PatientApiService::class.java)
+    }
+    // Pacientes (lo que ya tenías)
+    val api: PatientApiService by lazy {
+        retrofit.create(PatientApiService::class.java)
+    }
+
+    // Citas
+    val appointmentsApi: AppointmentApiService by lazy {
+        retrofit.create(AppointmentApiService::class.java)
     }
 }
 

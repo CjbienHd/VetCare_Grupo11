@@ -24,18 +24,17 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainScreen(
-    pacientesActivos: Int = 0,    // métrica visible 1
-    proximasCitas: Int = 0,       // métrica visible 2
-    vacunasPendientes: Int = 0,   // métrica visible 3
-    currentTab: MainTab = MainTab.HOME, // control externo del tab activo
-    onGoSettings: () -> Unit = {},      // abre Settings
-    onGoReminders: () -> Unit = {},     // abre Citas
-    onGoHome: () -> Unit = {},          // vuelve a Home
-    onGoPatients: () -> Unit = {},      // abre Pacientes
-    onFabClick: () -> Unit = {}         // acción principal: crear cita/paciente
+    pacientesActivos: Int = 0,
+    proximasCitas: Int = 0,
+    vacunasPendientes: Int = 0,
+    currentTab: MainTab = MainTab.HOME,
+    onGoSettings: () -> Unit = {},
+    onGoReminders: () -> Unit = {}, // Navega a la lista de citas
+    onGoHome: () -> Unit = {},
+    onGoPatients: () -> Unit = {},
+    onFabClick: () -> Unit = {}      // Ahora navega al formulario de citas
 ) {
     Scaffold(
-        // TopBar con título y botón de ajustes
         topBar = {
             TopAppBar(
                 title = {
@@ -77,7 +76,6 @@ fun MainScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
 
-        // Bottom bar: navegación entre secciones
         bottomBar = {
             MainBottomBar(
                 current = currentTab,
@@ -89,7 +87,6 @@ fun MainScreen(
 
         containerColor = MaterialTheme.colorScheme.background
     ) { inner ->
-        // Contenido principal: 3 tarjetas de métricas
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -99,21 +96,18 @@ fun MainScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // Tarjeta 1: Pacientes activos
             MetricCard(
                 title = "Pacientes Activos",
                 value = pacientesActivos,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Tarjeta 2: Próximas citas
             MetricCard(
                 title = "Citas",
                 value = proximasCitas,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Tarjeta 3: Vacunas pendientes
             MetricCard(
                 title = "Vacunas Pendientes",
                 value = vacunasPendientes,
@@ -148,7 +142,6 @@ private fun MetricCard(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Texto de la métrica
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -156,17 +149,11 @@ private fun MetricCard(
             )
             Spacer(Modifier.weight(1f))
 
-            // Contador a la derecha
             CounterBadge(value = value)
         }
     }
 }
 
-/**
- * CounterBadge = círculo con el número de la métrica
- * - Color secundario para dar contraste.
- * - Tamaño controlado para consistencia visual con el resto de la UI.
- */
 @Composable
 private fun CounterBadge(value: Int) {
     Box(
@@ -183,12 +170,6 @@ private fun CounterBadge(value: Int) {
     }
 }
 
-/**
- * MainBottomBar = barra inferior con 3 pestañas (Citas / Home / Pacientes).
- * - La selección depende de currentTab (estado que viene de arriba).
- * - Cada item ejecuta un callback para navegar (NavController vive fuera).
- * - Home destaca con color secundario cuando está activo (coherencia visual).
- */
 @Composable
 private fun MainBottomBar(
     current: MainTab,
@@ -197,7 +178,6 @@ private fun MainBottomBar(
     onPatients: () -> Unit
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-        // Tab 1: Citas (campana). Navega a recordatorios/agenda.
         NavigationBarItem(
             selected = current == MainTab.REMINDERS,
             onClick = onReminders,
@@ -210,7 +190,6 @@ private fun MainBottomBar(
             label = { Text("Citas") }
         )
 
-        // Tab 2: Home. Es el seleccionado por defecto.
         NavigationBarItem(
             selected = current == MainTab.HOME,
             onClick = onHome,
@@ -229,7 +208,6 @@ private fun MainBottomBar(
             }
         )
 
-        // Tab 3: Pacientes. Busca/lista pacientes.
         NavigationBarItem(
             selected = current == MainTab.PATIENTS,
             onClick = onPatients,
