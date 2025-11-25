@@ -2,61 +2,27 @@
 
 package com.example.vetcare_grupo11.ui
 
-
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.vetcare_grupo11.viewmodel.PatientsViewModel
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.vetcare_grupo11.ui.LoadingScreen
-import com.example.vetcare_grupo11.ui.MainScreen
-import androidx.compose.ui.platform.LocalContext
-import com.example.vetcare_grupo11.data.SharedPrefsPatientsStore
-import com.example.vetcare_grupo11.viewmodel.PatientsViewModelFactory
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.vetcare_grupo11.data.SharedPrefsPatientsStore
 import com.example.vetcare_grupo11.viewmodel.AppointmentsViewModel
-import androidx.compose.runtime.collectAsState
-
-
-private val Teal = Color(0xFF00A9B9)
-private val TealDark = Color(0xFF0093A2)
-private val Coral = Color(0xFFFF6F61)
-private val Soft = Color(0xFFE6F4F1)
-private val Soft2 = Color(0xFFE5F1F1)
-
-private val FixedLightColors = lightColorScheme(
-    primary = Teal,
-    onPrimary = Color.White,
-    secondary = Coral,
-    onSecondary = Color.White,
-    background = Soft,
-    onBackground = TealDark,
-    surface = Color.White,
-    onSurface = TealDark,
-    surfaceVariant = Soft2,
-    onSurfaceVariant = TealDark
-)
+import com.example.vetcare_grupo11.viewmodel.PatientsViewModel
+import com.example.vetcare_grupo11.viewmodel.PatientsViewModelFactory
 
 @Composable
 fun AppNavigation(
@@ -73,48 +39,11 @@ fun AppNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: "login"
 
-    var lastRoute by remember { mutableStateOf(currentRoute) }
-    val forward = remember(currentRoute, lastRoute) {
-        lastRoute == "login" && currentRoute == "register"
-    }
-    LaunchedEffect(currentRoute) { lastRoute = currentRoute }
-
     AnimatedContent(
         targetState = currentRoute,
         transitionSpec = {
-            val dur = 650
-            val ease = FastOutSlowInEasing
-            if (forward) {
-                (slideInHorizontally(
-                    initialOffsetX = { full -> (full * 0.9f).toInt() },
-                    animationSpec = tween(dur, easing = ease)
-                ) + fadeIn(
-                    animationSpec = tween(dur, easing = ease),
-                    initialAlpha = 0.0f
-                ) + scaleIn(
-                    initialScale = 0.98f,
-                    animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
-                )) togetherWith
-                        (slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> -fullWidth / 2 },
-                            animationSpec = tween(250)
-                        ) + fadeOut())
-            } else {
-                (slideInHorizontally(
-                    initialOffsetX = { full -> -(full * 0.9f).toInt() },
-                    animationSpec = tween(dur, easing = ease)
-                ) + fadeIn(
-                    animationSpec = tween(dur, easing = ease),
-                    initialAlpha = 0.0f
-                ) + scaleIn(
-                    initialScale = 0.98f,
-                    animationSpec = tween((dur * 0.9f).toInt(), easing = ease)
-                )) togetherWith
-                        (slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> fullWidth / 2 },
-                            animationSpec = tween(250)
-                        ) + fadeOut(animationSpec = tween(dur, easing = ease)))
-            }.using(SizeTransform(clip = false))
+            fadeIn(animationSpec = tween(300)) togetherWith
+            fadeOut(animationSpec = tween(300))
         },
         modifier = Modifier.fillMaxSize(),
         label = "NavTransitions"
@@ -126,21 +55,15 @@ fun AppNavigation(
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable("login") {
-                    MaterialTheme(colorScheme = FixedLightColors) {
-                        LoginVisualScreen(
-                            onCreateAccount = { navController.navigate("register") },
-                            {
-                                navController.navigate("loading")
-                            }
-                        )
-                    }
+                    LoginVisualScreen(
+                        onCreateAccount = { navController.navigate("register") },
+                        onLoginOk = { navController.navigate("loading") }
+                    )
                 }
                 composable("register") {
-                    MaterialTheme(colorScheme = FixedLightColors) {
-                        RegistroScreenSimple(
-                            goLogin = { navController.popBackStack() }
-                        )
-                    }
+                    RegistroScreenSimple(
+                        goLogin = { navController.popBackStack() }
+                    )
                 }
                 composable("loading") {
                     LoadingScreen(navController = navController)
@@ -148,15 +71,17 @@ fun AppNavigation(
                 composable("main") {
                     val patients by patientsVm.patients.collectAsState()
                     val appointments by appointmentsVm.appointments.collectAsState()
+                    val vacunasPendientes = appointments.count { it.esVacuna && it.estado == "Programada" }
 
                     MainScreen(
+                        navController = navController,
                         pacientesActivos = patients.size,
                         onGoSettings = { navController.navigate("settings") },
                         onGoPatients = { navController.navigate("patients") },
-                        onGoReminders = { navController.navigate("appointments") }, // Conectado
-                        onFabClick = { navController.navigate("appointment_form") },      // Conectado
+                        onGoReminders = { navController.navigate("appointments") },
+                        onFabClick = { navController.navigate("appointment_form") },
                         proximasCitas = appointments.size,
-                        vacunasPendientes = 0
+                        vacunasPendientes = vacunasPendientes
                     )
                 }
                 composable("settings") {
@@ -164,7 +89,8 @@ fun AppNavigation(
                         darkTheme = darkTheme,
                         onThemeChange = onThemeChange,
                         onGoHome = { navController.navigate("main") },
-                        onGoPatients = { navController.navigate("patients") }
+                        onGoPatients = { navController.navigate("patients") },
+                        onGoReminders = { navController.navigate("appointments") }
                     )
                 }
 
@@ -181,12 +107,12 @@ fun AppNavigation(
                         onGoPatients = { },
                         onGoReminders = { navController.navigate("appointments") },
                         onSettings = { navController.navigate("settings") },
-                        currentTab = MainTabPatients.PATIENTS
+                        currentTab = MainTab.PATIENTS
                     )
                 }
 
                 composable(
-                    route = "patient_form?id={id}", // Ruta única para el formulario de pacientes
+                    route = "patient_form?id={id}",
                     arguments = listOf(navArgument("id") {
                         type = NavType.StringType
                         nullable = true
@@ -213,20 +139,27 @@ fun AppNavigation(
 
                 composable("appointments") {
                     val appointments by appointmentsVm.appointments.collectAsState()
+                    val patients by patientsVm.patients.collectAsState()
 
                     AppointmentsScreen(
                         appointments = appointments,
+                        patients = patients,
                         onAddAppointment = { navController.navigate("appointment_form") },
                         onAppointmentClick = { cita ->
                             navController.navigate("appointment_form?id=${cita.id}")
                         },
                         onRemoveAppointment = { appointmentsVm.removeAppointment(it.id) },
-                        onGoHome = { navController.navigate("main") }
+                        onGoHome = { navController.navigate("main") },
+                        onGoPatients = { navController.navigate("patients") }
                     )
                 }
 
+                composable("clima_clinica") {
+                    PantallaClimaClinica(volver = { navController.popBackStack() })
+                }
+
                 composable(
-                    route = "appointment_form?id={id}", // Ruta única para el formulario de citas
+                    route = "appointment_form?id={id}",
                     arguments = listOf(navArgument("id") {
                         type = NavType.StringType
                         nullable = true
@@ -234,12 +167,14 @@ fun AppNavigation(
                 ) { backStackEntry ->
                     val id = backStackEntry.arguments?.getString("id")
                     val cita = id?.let { appointmentsVm.getAppointment(it) }
+                    val patients by patientsVm.patients.collectAsState()
 
                     AddAppointmentScreen(
                         appointmentToEdit = cita,
+                        patients = patients, 
                         onSave = { a ->
                             if (cita == null) {
-                                appointmentsVm.addAppointment(a)
+                                appointmentsVm.addAppointment(a, ctx) // <-- CONTEXTO PASADO
                             } else {
                                 appointmentsVm.updateAppointment(a)
                             }

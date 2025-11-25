@@ -1,32 +1,55 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+@file:OptIn(
+    ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class
+)
 
 package com.example.vetcare_grupo11.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Vaccines
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.vetcare_grupo11.viewmodel.Appointment
+import com.example.vetcare_grupo11.viewmodel.Patient
 
 @Composable
 fun AppointmentsScreen(
     appointments: List<Appointment>,
+    patients: List<Patient>,
     onAddAppointment: () -> Unit,
     onAppointmentClick: (Appointment) -> Unit,
     onRemoveAppointment: (Appointment) -> Unit,
-    onGoHome: () -> Unit
+    onGoHome: () -> Unit,
+    onGoPatients: () -> Unit,
+    currentTab: MainTab = MainTab.REMINDERS
 ) {
-
-    // Estado para controlar qué cita se quiere borrar y mostrar el diálogo
     var appointmentToDelete by remember { mutableStateOf<Appointment?>(null) }
 
     Scaffold(
@@ -39,20 +62,27 @@ fun AppointmentsScreen(
             FloatingActionButton(onClick = onAddAppointment) {
                 Icon(Icons.Filled.Add, contentDescription = "Nueva cita")
             }
+        },
+        bottomBar = {
+            MainBottomBar(
+                current = currentTab,
+                onReminders = {},
+                onHome = onGoHome,
+                onPatients = onGoPatients
+            )
         }
     ) { padding ->
 
-        // --- Diálogo de Confirmación de Borrado ---
         if (appointmentToDelete != null) {
             AlertDialog(
-                onDismissRequest = { appointmentToDelete = null }, // Cierra el diálogo si se pulsa fuera
+                onDismissRequest = { appointmentToDelete = null },
                 title = { Text("Confirmar Eliminación") },
                 text = { Text("¿Estás seguro de que quieres eliminar la cita para '${appointmentToDelete!!.patientName}'?") },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             onRemoveAppointment(appointmentToDelete!!)
-                            appointmentToDelete = null // Cierra el diálogo
+                            appointmentToDelete = null
                         }
                     ) {
                         Text("Eliminar")
@@ -84,28 +114,60 @@ fun AppointmentsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(appointments, key = { it.id ?: it.hashCode() }) { cita ->
+                    val patient = patients.find { it.nombre == cita.patientName }
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .combinedClickable(
                                 onClick = { onAppointmentClick(cita) },
-                                onLongClick = { appointmentToDelete = cita } // En pulsación larga, seleccionamos la cita para borrar
+                                onLongClick = { appointmentToDelete = cita }
                             )
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = cita.patientName,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            // Avatar con Foto o Icono
+                            if (patient?.fotoUri != null) {
+                                AsyncImage(
+                                    model = patient.fotoUri,
+                                    contentDescription = "Foto de ${patient.nombre}",
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                    contentScale = ContentScale.Crop
                                 )
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Motivo: ${cita.motivo}")
-                            Text("Fecha y hora: ${cita.fechaHora}")
-                            if (cita.notas.isNotBlank()) {
-                                Text("Notas: ${cita.notas}")
+                            } else {
+                                // Icono distintivo para vacuna o consulta
+                                val icon = if (cita.esVacuna) Icons.Default.Vaccines else Icons.Outlined.Event
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
                             }
-                            Text("Estado: ${cita.estado}")
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column {
+                                Text(
+                                    text = cita.patientName,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("Motivo: ${cita.motivo}")
+                                Text("Fecha: ${cita.fechaHora}")
+                            }
                         }
                     }
                 }

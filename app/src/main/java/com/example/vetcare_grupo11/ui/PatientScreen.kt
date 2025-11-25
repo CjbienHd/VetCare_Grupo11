@@ -2,8 +2,6 @@
 
 package com.example.vetcare_grupo11.ui
 
-
-
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,19 +28,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.vetcare_grupo11.viewmodel.Patient
 
 
 @Composable
 fun PatientsScreen(
-    //Lista de pacientes a mostrar
     patients: List<Patient>,
-    //Navega hasta la pagina de adicion de paciente
     onAddPatient: () -> Unit,
     onPatientClick: (Patient) -> Unit = {},
     onGoReminders: () -> Unit = {},
@@ -50,10 +48,8 @@ fun PatientsScreen(
     onSettings: () -> Unit = {},
     onRemovePatient: (Patient) -> Unit,
     onGoPatients: () -> Unit = {},
-    // Indica qué pestaña de la barra inferior está actualmente seleccionada.
     currentTab: MainTabPatients = MainTabPatients.PATIENTS
 ) {
-    // Almacena el paciente que se va a borrar. Se muestra dialogo de confirmacion en caso de no ser null
     var toDelete: Patient? by remember { mutableStateOf(null) }
     Scaffold(
 
@@ -76,7 +72,6 @@ fun PatientsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },
-        //Añadir nuevo paciente
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddPatient,
@@ -100,7 +95,6 @@ fun PatientsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     )
-    //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     { inner ->
 
         Column(
@@ -109,7 +103,6 @@ fun PatientsScreen(
                 .padding(inner)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Banda de bienvenida suave ( mismo lenguaje visual)
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(20.dp),
@@ -125,7 +118,7 @@ fun PatientsScreen(
                 ) {
                     Text(
                         "Pacientes",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme. typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -136,22 +129,18 @@ fun PatientsScreen(
                 }
             }
 
-            // Lista de pacientes
-            //Dibuja solo los pacientes que son visibles en la pantalla (LazyColumn)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 96.dp) // espacio para FAB/bottombar
+                contentPadding = PaddingValues(bottom = 96.dp)
             ) {
-                //Usa el id como clave unica para pacientes
                 items(patients, key = {  p -> p.id ?: p.hashCode() }) { p ->
                     PatientCard(
                         patient = p,
-                        //combinedClickable permite asignar distintas acciones dependiendo de los tipos de clicks
                         onClick = { onPatientClick(p) },
-                                onLongPress = { toDelete = p }
+                        onLongPress = { toDelete = p }
                     )
                 }
 
@@ -160,13 +149,12 @@ fun PatientsScreen(
     }
     if (toDelete != null) {
         AlertDialog(
-            //Si el usuario toca fuera de la alerta o presiona "cancelar" se cierra la alerta
             onDismissRequest = { toDelete = null },
             title = { Text("Eliminar paciente") },
             text  = { Text("¿Seguro que deseas eliminar a \"${toDelete!!.nombre}\"?") },
             confirmButton = {
                 TextButton(onClick = {
-                    onRemovePatient(toDelete!!)   // ← callback que borra en el VM
+                    onRemovePatient(toDelete!!)
                     toDelete = null
                 }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
             },
@@ -176,8 +164,6 @@ fun PatientsScreen(
         )
     }
 }
-
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -191,7 +177,6 @@ private fun PatientCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth()
-            //combinedClickable permite asignar distintas acciones dependiendo de los tipos de clicks
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongPress
@@ -203,19 +188,31 @@ private fun PatientCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar simple con icono de especie
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Pets,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+            // Avatar con foto o icono
+            if (patient.fotoUri != null) {
+                AsyncImage(
+                    model = patient.fotoUri,
+                    contentDescription = "Foto de ${patient.nombre}",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Pets,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             Spacer(Modifier.width(12.dp))
@@ -242,14 +239,12 @@ private fun PatientCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
         }
     }
 }
 
 @Composable
 private fun AppBottomBar(
-    //Usa el parámetro current de tipo MainTabPatients para saber cuál de los tres ítems debe aparecer como "seleccionado".
     current: MainTabPatients,
     onReminders: () -> Unit,
     onHome: () -> Unit,
@@ -257,7 +252,6 @@ private fun AppBottomBar(
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
         NavigationBarItem(
-
             selected = current == MainTabPatients.REMINDERS,
             onClick = onReminders,
             icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Citas") },
@@ -291,5 +285,4 @@ private fun AppBottomBar(
     }
 }
 
-// Tabs para marcar el seleccionado en el bottom bar
 enum class MainTabPatients { REMINDERS, HOME, PATIENTS }

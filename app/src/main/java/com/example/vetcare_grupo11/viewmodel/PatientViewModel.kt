@@ -1,7 +1,5 @@
 package com.example.vetcare_grupo11.viewmodel
 
-
-
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -12,14 +10,13 @@ import kotlinx.coroutines.launch
 import com.example.vetcare_grupo11.network.RetrofitInstance
 import java.util.UUID
 
-
-//Define la estructura de los datos de pacientes
 data class Patient(
     val id: String? = null,
     val nombre: String,
     val especie: String,
     val raza: String? = null,
-    val tutor: String
+    val tutor: String,
+    val fotoUri: String? = null
 )
 
 class PatientsViewModel(
@@ -29,37 +26,31 @@ class PatientsViewModel(
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
     val patients: StateFlow<List<Patient>> = _patients
 
-    // Estado para saber si estamos cargando datos del backend
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    val activeCount: StateFlow<Int> = patients
-        .map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
-
     init {
-        loadPatientsFromBackend()
+        loadInitialData()
     }
 
-    private fun loadPatientsFromBackend() {
+    private fun loadInitialData() {
         viewModelScope.launch {
             _isLoading.value = true
+            _patients.value = store.load()
             try {
-                // 1. Siempre intentamos cargar desde el backend primero
                 val fromBackend = RetrofitInstance.api.getPatients()
-                _patients.value = fromBackend // Actualizamos la lista con la respuesta (incluso si está vacía)
-                store.save(fromBackend) // Guardamos en el caché local
+                if (fromBackend.isNotEmpty()) {
+                    _patients.value = fromBackend
+                    store.save(fromBackend)
+                }
             } catch (e: Exception) {
-                // 2. Si el backend falla, cargamos desde el caché local como respaldo
-                Log.e("ViewModel", "Error cargando desde backend, usando caché local", e)
-                _patients.value = store.load()
+                Log.e("ViewModel", "Error cargando desde backend, se mantiene caché local", e)
             } finally {
-                _isLoading.value = false // Dejamos de cargar, ya sea con éxito o con error
+                _isLoading.value = false
             }
         }
     }
 
-    // Crea un nuevo paciente y lo envía al BACKEND
     fun addPatient(p: Patient) {
         viewModelScope.launch {
             val withId = if (p.id.isNullOrBlank()) {
@@ -68,51 +59,55 @@ class PatientsViewModel(
                 p
             }
 
+            // --- UI OPTIMISTA (Añadir es una operación de bajo riesgo) ---
+            val originalList = _patients.value
+            _patients.value = originalList + withId
+            store.save(_patients.value)
+
             try {
                 val created = RetrofitInstance.api.createPatient(withId)
-                _patients.value = _patients.value + created
-                store.save(_patients.value) // Actualizar caché local
+                _patients.value = originalList + created
+                store.save(_patients.value)
             } catch (e: Exception) {
-                Log.e("ViewModel", "API call failed for addPatient", e)
-                // Opcional: podrías añadirlo localmente para que el usuario no pierda el dato
-                _patients.value = _patients.value + withId
+                Log.e("ViewModel", "Fallo al añadir en backend, se mantiene en local", e)
             }
         }
     }
 
-    // Elimina paciente en backend y luego en la lista local
+    // --- LÓGICA DE BORRADO SEGURA (PESIMISTA) ---
     fun removePatient(id: String?) {
         if (id == null) return
         viewModelScope.launch {
-            val oldList = _patients.value
-            // Optimistic UI: lo borramos de la UI inmediatamente
-            _patients.value = _patients.value.filterNot { it.id == id }
+            val originalList = _patients.value
             try {
+                // 1. Primero intentar borrar en el backend
                 RetrofitInstance.api.deletePatient(id)
-                store.save(_patients.value) // Actualizar caché local
+                
+                // 2. Si tiene éxito, actualizar UI y caché local
+                _patients.value = originalList.filterNot { it.id == id }
+                store.save(_patients.value)
+
             } catch (e: Exception) {
-                Log.e("ViewModel", "API call failed for removePatient", e)
-                // Si falla, revertimos el cambio en la UI
-                _patients.value = oldList
+                Log.e("ViewModel", "Fallo al borrar en backend, no se hacen cambios", e)
+                // Opcional: Mostrar un snackbar o toast con el error al usuario
             }
         }
     }
 
-
-    // Actualiza paciente en backend y luego en la lista local
     fun updatePatient(patient: Patient) {
         val id = patient.id ?: return
-
         viewModelScope.launch {
+            val originalList = _patients.value
+            // UI Optimista para que la edición se sienta rápida
+            _patients.value = originalList.map { if (it.id == id) patient else it }
+            store.save(_patients.value)
+
             try {
-                val updatedFromBackend = RetrofitInstance.api.updatePatient(id, patient)
-                _patients.value = _patients.value.map {
-                    if (it.id == id) updatedFromBackend else it
-                }
-                store.save(_patients.value)
+                RetrofitInstance.api.updatePatient(id, patient)
             } catch (e: Exception) {
-                Log.e("ViewModel", "API call failed for updatePatient", e)
-                // Fallback opcional si falla el backend
+                Log.e("ViewModel", "Fallo al actualizar en backend, revirtiendo", e)
+                _patients.value = originalList
+                store.save(originalList)
             }
         }
     }
@@ -126,7 +121,6 @@ class PatientsViewModelFactory(private val store: PatientsStore) : ViewModelProv
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         require(modelClass.isAssignableFrom(PatientsViewModel::class.java))
-        // Ya no necesita la dependencia de Firebase
         return PatientsViewModel(store) as T
     }
 }

@@ -2,22 +2,31 @@
 
 package com.example.vetcare_grupo11.ui
 
-
-
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.vetcare_grupo11.viewmodel.Patient
 import java.util.UUID
 
@@ -29,21 +38,32 @@ fun AddPatientScreen(
     onGoHome: () -> Unit,
     onGoPatients: () -> Unit
 ) {
-    val isEditMode = patientToEdit != null // Determina si estamos en modo edición
+    val isEditMode = patientToEdit != null
     var nombre by remember { mutableStateOf("") }
-    var especie by remember { mutableStateOf("Perro") } // Perro | Gato
+    var especie by remember { mutableStateOf("Perro") }
     var raza by remember { mutableStateOf("") }
     var tutor by remember { mutableStateOf("") }
-    //Booleano dedicado a controlar el menu desplegable
+    var fotoPacienteUri by remember { mutableStateOf<String?>(null) }
+
     var especieExpanded by remember { mutableStateOf(false) }
     val especies = listOf("Perro", "Gato")
 
+    val lanzadorGaleria = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            if (uri != null) {
+                fotoPacienteUri = uri.toString()
+            }
+        }
+    )
+
     LaunchedEffect(key1 = patientToEdit) {
-        if (isEditMode) {
-            nombre = patientToEdit?.nombre ?: ""
-            especie = patientToEdit?.especie ?: "Perro"
-            raza = patientToEdit?.raza ?: ""
-            tutor = patientToEdit?.tutor ?: ""
+        if (isEditMode && patientToEdit != null) {
+            nombre = patientToEdit.nombre
+            especie = patientToEdit.especie
+            raza = patientToEdit.raza ?: ""
+            tutor = patientToEdit.tutor
+            fotoPacienteUri = patientToEdit.fotoUri
         }
     }
 
@@ -60,16 +80,14 @@ fun AddPatientScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
-        //Reutiliza un componente indicando que la pestaña actual es la de PATIENTS.
         bottomBar = {
-            SettingsBottomBar(
+            MainBottomBar(
                 current = MainTab.PATIENTS,
                 onReminders = { },
                 onHome = onGoHome,
                 onPatients = onGoPatients
             )
         }
-        //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     ) { inner ->
         Column(
             modifier = Modifier
@@ -81,26 +99,31 @@ fun AddPatientScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // Tarjeta de cabecera
-            Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(20.dp)) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (isEditMode) "Modificar paciente ✍️" else "Agregar paciente 🐾",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
+            // Sección de Foto del Paciente
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (fotoPacienteUri != null) {
+                    AsyncImage(
+                        model = fotoPacienteUri,
+                        contentDescription = "Foto del paciente",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
-                    Text(
-                        "Completa la información para registrar",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Pets,
+                        contentDescription = "Icono Paciente",
+                        modifier = Modifier.size(100.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = { lanzadorGaleria.launch("image/*") }) {
+                    Text("Seleccionar Foto")
+                }
             }
+            
 
             // Card del formulario
             Card(
@@ -122,9 +145,7 @@ fun AddPatientScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Selector de especie (exposed dropdown)
                     ExposedDropdownMenuBox(
-                        //Aqui se configura para alternar el menu desplegable
                         expanded = especieExpanded,
                         onExpandedChange = { especieExpanded = !especieExpanded }
                     ) {
@@ -135,20 +156,15 @@ fun AddPatientScreen(
                             label = { Text("Especie") },
                             leadingIcon = { Icon(Icons.Default.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = especieExpanded) },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
-                        //Es el menu flotante. Solo se muestra si especieExpanded es true.
                         ExposedDropdownMenu(
                             expanded = especieExpanded,
                             onDismissRequest = { especieExpanded = false }
                         ) {
-                            //Crea un DropdownMenuItem para cada especie en la lista
                             especies.forEach { opt ->
                                 DropdownMenuItem(
                                     text = { Text(opt) },
-                                    //Actualiza el estado de especie y se cierra el menu
                                     onClick = {
                                         especie = opt
                                         especieExpanded = false
@@ -176,7 +192,6 @@ fun AddPatientScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Botones
                     Button(
                         onClick = {
                             val p = Patient(
@@ -184,16 +199,14 @@ fun AddPatientScreen(
                                 nombre = nombre.trim(),
                                 especie = especie,
                                 raza = raza.trim(),
-                                tutor = tutor.trim()
+                                tutor = tutor.trim(),
+                                fotoUri = fotoPacienteUri
                             )
                             onSave(p)
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         shape = RoundedCornerShape(16.dp),
-                        //Desabilita el boton si alguno de los campo de textos esta vacio
                         enabled = nombre.isNotBlank() && raza.isNotBlank() && tutor.isNotBlank()
                     ) {
                         Text(if (isEditMode) "Actualizar" else "Guardar")

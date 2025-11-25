@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
@@ -27,21 +26,16 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun SettingsScreen(
-    //Booleano para saber si el tema oscuro esta activado o no
     darkTheme: Boolean,
-    //Booleano que si es true muestra el tema claro, si es false, muestra el tema oscuro
     onThemeChange: (Boolean) -> Unit,
     onGoHome: () -> Unit,
-    currentTab: MainTab = MainTab.HOME,
-    onGoReminders: () -> Unit = {},
-    onGoPatients: () -> Unit = {}
+    onGoReminders: () -> Unit,
+    onGoPatients: () -> Unit
 ) {
     val ctx = LocalContext.current
-    //Booleano que si es true muestra la informacion, si es false, no
     var showInfo by remember { mutableStateOf(false) }
 
     Scaffold(
-        // Barra superior con título y engranaje
         topBar = {
             TopAppBar(
                 title = {
@@ -57,7 +51,8 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Outlined.Settings,
                         contentDescription = "Ajustes",
-                        modifier = Modifier.padding(end = 16.dp)
+                        modifier = Modifier.padding(end = 16.dp),
+                        tint = MaterialTheme.colorScheme.secondary // <-- Resaltado
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -67,17 +62,16 @@ fun SettingsScreen(
                 )
             )
         },
-        // Barra inferior
         bottomBar = {
-            SettingsBottomBar(
-                current = currentTab,
+            // Reutilizamos la barra de navegación principal
+            MainBottomBar(
+                current = MainTab.NONE, // No es una pestaña principal
                 onReminders = onGoReminders,
                 onHome = onGoHome,
                 onPatients = onGoPatients
             )
         },
         containerColor = MaterialTheme.colorScheme.background
-        //inner = cuánto espacio debe dejar en los bordes para no quedar oculto detrás de la TopAppBar o la BottomAppBar.
     ) { inner ->
         Column(
             modifier = Modifier
@@ -88,49 +82,39 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
-            // Permite alternar entre claro y oscuro
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Cambiar Tema",
                 trailing = {
                     Switch(
-                        //Muestra el estado del Switch (tema claro o oscuro)
                         checked = darkTheme,
-                        //Cuando se interactua con el switch se invoca la funcion onThemeChange que se encarga de cambiar el tema
                         onCheckedChange = onThemeChange
                     )
                 },
                 onClick = { onThemeChange(!darkTheme) }
             )
 
-             // Exportar Datos
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.Pets, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Copia Local/ Exportar",
                 onClick = {
-                    // Acceso a SharedPreferences para leer datos guardados de los usuarios
                     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
                     val usuarios = sp.getString("usuarios", "") ?: ""
-                    // Intent para compartir el contenido
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        // Añade el contenido a compartir como EXTRA_TEXT.
                         putExtra(Intent.EXTRA_SUBJECT, "Backup VetCare")
                         putExtra(Intent.EXTRA_TEXT, "Usuarios registrados:\n$usuarios")
                     }
-                    // Abre el selector de aplicaciones para compartir
                     ctx.startActivity(Intent.createChooser(shareIntent, "Compartir copia"))
                 }
             )
 
-            // === Card 3: Información ===
             SettingsRowCard(
                 icon = { Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Información",
                 onClick = { showInfo = true }
             )
 
-            // Dialog información
             if (showInfo) {
                 AlertDialog(
                     onDismissRequest = { showInfo = false },
@@ -138,20 +122,15 @@ fun SettingsScreen(
                         TextButton(onClick = { showInfo = false }) { Text("Cerrar") }
                     },
                     title = { Text("VetCare móvil") },
-                    text = {
-                        Text(
-                            "App demo de VetCare, versión 1.0.0.\n"
-                        )
-                    }
+                    text = { Text("App demo de VetCare, versión 1.0.0.\n") }
                 )
             }
 
-            Spacer(Modifier.height(72.dp)) // espacio para bottom bar
+            Spacer(Modifier.height(72.dp))
         }
     }
 }
 
-/** Fila-card como en el mockup: icono coral a la izquierda, texto y trailing opcional */
 @Composable
 private fun SettingsRowCard(
     icon: @Composable () -> Unit,
@@ -192,41 +171,5 @@ private fun SettingsRowCard(
             Spacer(Modifier.weight(1f))
             trailing?.invoke()
         }
-    }
-}
-
-/** Bottom bar igual a Home */
-@Composable
-fun SettingsBottomBar(
-    current: MainTab,
-    onReminders: () -> Unit,
-    onHome: () -> Unit,
-    onPatients: () -> Unit
-) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-        NavigationBarItem(
-            selected = current == MainTab.REMINDERS,
-            onClick = onReminders,
-            icon = { Icon(imageVector = Icons.Outlined.Notifications, contentDescription = "Citas") },
-            label = { Text("Citas") }
-        )
-        NavigationBarItem(
-            selected = current == MainTab.HOME,
-            onClick = onHome,
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.Pets,
-                    contentDescription = "Home",
-                    tint = if (current == MainTab.HOME) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            label = { Text("Home", color = if (current == MainTab.HOME) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant) }
-        )
-        NavigationBarItem(
-            selected = current == MainTab.PATIENTS,
-            onClick = onPatients,
-            icon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "Pacientes") },
-            label = { Text("Pacientes") }
-        )
     }
 }

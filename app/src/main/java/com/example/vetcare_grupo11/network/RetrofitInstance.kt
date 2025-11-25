@@ -11,7 +11,7 @@ object RetrofitInstance {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-    // Pacientes (lo que ya tenías)
+    // Pacientes
     val api: PatientApiService by lazy {
         retrofit.create(PatientApiService::class.java)
     }
