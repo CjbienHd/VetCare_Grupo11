@@ -50,7 +50,7 @@ fun PantallaClimaClinica(
     val estado by viewModel.estado.collectAsState()
 
     val backgroundColor = Color(0xFFF0F5F5)
-    val primaryTextColor = Color(0xFF00897B) // Teal color
+    val primaryTextColor = Color(0xFF00897B)
 
     LaunchedEffect(Unit) {
         viewModel.cargarClimaClinica()
@@ -85,7 +85,7 @@ fun PantallaClimaClinica(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.width(48.dp)) // Balance IconButton space
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
         }
@@ -127,7 +127,7 @@ fun PantallaClimaClinica(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Main Weather Card
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
@@ -169,7 +169,7 @@ fun PantallaClimaClinica(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Environmental Note Card
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),

@@ -31,7 +31,7 @@ private val CardSoft = Color(0xFFE6F4F1)
 @Composable
 fun LoginVisualScreen(
     onCreateAccount: () -> Unit = {},
-    onLoginOk: () -> Unit = {} // callback opcional para navegar cuando el login sea correcto
+    onLoginOk: (userEmail: String) -> Unit = {} // callback opcional para navegar cuando el login sea correcto
 ) {
     //para guardar el estado de la UI y se redibuje automáticamente cuando cambian.
     var email by remember { mutableStateOf("") }
@@ -185,7 +185,7 @@ fun LoginVisualScreen(
                                     if (acceso) {
                                         //De ser verdadero se navega hasta la pantalla Main
                                         loginOk = true
-                                        onLoginOk()
+                                        onLoginOk(email.trim())
                                     } else {
                                         passError = "Credenciales incorrectas"
                                     }
@@ -262,9 +262,9 @@ private fun checkCredentials(
     //Accede a SharedPreferences
     val sp = ctx.getSharedPreferences("datos_app", android.content.Context.MODE_PRIVATE)
     //Busca un String bajo la clave "usuarios".
-    //Los usuarios estan guardados por un unico string separados por ";" y los datos, usuario y contraseña estan separados por un "|"
+    //Los usuarios están guardados por un único string separados por ";" y los datos, usuario y contraseña están separados por un "|"
     val raw = sp.getString("usuarios", "") ?: ""
-    //verifica si hay una combinacion que coincida con lo ingresado por el usuario
+    //verifica si hay una combinación que coincida con lo ingresado por el usuario
     return raw.split(";")
         .asSequence()
         .map { it.trim() }

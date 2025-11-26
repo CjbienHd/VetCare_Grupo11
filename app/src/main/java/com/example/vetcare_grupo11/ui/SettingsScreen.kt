@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,7 +30,8 @@ fun SettingsScreen(
     onThemeChange: (Boolean) -> Unit,
     onGoHome: () -> Unit,
     onGoReminders: () -> Unit,
-    onGoPatients: () -> Unit
+    onGoPatients: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val ctx = LocalContext.current
     var showInfo by remember { mutableStateOf(false) }
@@ -113,6 +114,12 @@ fun SettingsScreen(
                 icon = { Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                 text = "Información",
                 onClick = { showInfo = true }
+            )
+
+            SettingsRowCard(
+                icon = { Icon(Icons.Filled.ExitToApp, contentDescription = "Cerrar Sesión", tint = MaterialTheme.colorScheme.secondary) },
+                text = "Cerrar sesión",
+                onClick = onLogout
             )
 
             if (showInfo) {

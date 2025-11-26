@@ -36,8 +36,9 @@ class SharedPrefsPatientsStore(context: Context) : PatientsStore {
                             id = o.getString("id"),
                             nombre = o.getString("nombre"),
                             especie = o.getString("especie"),
-                            raza = o.getString("raza"),
-                            tutor = o.getString("tutor")
+                            raza = o.optString("raza", null),
+                            tutor = o.getString("tutor"),
+                            fotoUri = o.optString("fotoUri", null)
                         )
                     )
                 }
@@ -58,6 +59,7 @@ class SharedPrefsPatientsStore(context: Context) : PatientsStore {
             o.put("especie", p.especie)
             o.put("raza", p.raza)
             o.put("tutor", p.tutor)
+            o.put("fotoUri", p.fotoUri)
             arr.put(o)
         }
         sp.edit().putString(KEY, arr.toString()).apply()

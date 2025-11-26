@@ -2,6 +2,7 @@
 
 package com.example.vetcare_grupo11.ui
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,7 @@ import androidx.navigation.NavHostController
 @Composable
 fun MainScreen(
     navController: NavHostController,
+    userName: String,
     pacientesActivos: Int = 0,
     proximasCitas: Int = 0,
     vacunasPendientes: Int = 0,
@@ -73,13 +75,13 @@ fun MainScreen(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 shape = CircleShape,
                 modifier = Modifier
-                    .size(90.dp) // <-- TAMAÑO AUMENTADO
+                    .size(90.dp)
                     .shadow(12.dp, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Añadir Cita",
-                    modifier = Modifier.size(44.dp), // <-- TAMAÑO DE ICONO AUMENTADO
+                    modifier = Modifier.size(44.dp),
                     tint = MaterialTheme.colorScheme.onSecondary
                 )
             }
@@ -101,6 +103,15 @@ fun MainScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Bienvenido $userName",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
             Spacer(Modifier.height(24.dp))
 
             // Grupo de tarjetas de métrica

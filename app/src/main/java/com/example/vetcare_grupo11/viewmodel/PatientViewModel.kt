@@ -1,5 +1,7 @@
 package com.example.vetcare_grupo11.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,6 +10,8 @@ import com.example.vetcare_grupo11.data.PatientsStore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.example.vetcare_grupo11.network.RetrofitInstance
+import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 
 data class Patient(
@@ -33,15 +37,42 @@ class PatientsViewModel(
         loadInitialData()
     }
 
+    private fun saveImageToInternalStorage(context: Context, uriString: String?): String? {
+        if (uriString == null || !uriString.startsWith("content://")) {
+            return uriString
+        }
+        return try {
+            val uri = Uri.parse(uriString)
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val fileName = "${UUID.randomUUID()}.jpg"
+            val file = File(context.filesDir, fileName)
+            val outputStream = FileOutputStream(file)
+            inputStream?.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                }
+            }
+            Uri.fromFile(file).toString()
+        } catch (e: Exception) {
+            Log.e("ViewModel", "Error copying image", e)
+            null
+        }
+    }
+
     private fun loadInitialData() {
         viewModelScope.launch {
             _isLoading.value = true
-            _patients.value = store.load()
+            val localPatients = store.load()
+            _patients.value = localPatients
             try {
                 val fromBackend = RetrofitInstance.api.getPatients()
                 if (fromBackend.isNotEmpty()) {
-                    _patients.value = fromBackend
-                    store.save(fromBackend)
+                    val mergedPatients = fromBackend.map { backendPatient ->
+                        val localPatient = localPatients.find { it.id == backendPatient.id }
+                        backendPatient.copy(fotoUri = localPatient?.fotoUri)
+                    }
+                    _patients.value = mergedPatients
+                    store.save(mergedPatients)
                 }
             } catch (e: Exception) {
                 Log.e("ViewModel", "Error cargando desde backend, se mantiene caché local", e)
@@ -51,59 +82,71 @@ class PatientsViewModel(
         }
     }
 
-    fun addPatient(p: Patient) {
+    fun addPatient(p: Patient, context: Context) {
         viewModelScope.launch {
-            val withId = if (p.id.isNullOrBlank()) {
-                p.copy(id = UUID.randomUUID().toString())
+            val savedImageUri = saveImageToInternalStorage(context, p.fotoUri)
+            val patientWithPermanentImage = p.copy(fotoUri = savedImageUri)
+
+            val withId = if (patientWithPermanentImage.id.isNullOrBlank()) {
+                patientWithPermanentImage.copy(id = UUID.randomUUID().toString())
             } else {
-                p
+                patientWithPermanentImage
             }
 
-            // --- UI OPTIMISTA (Añadir es una operación de bajo riesgo) ---
-            val originalList = _patients.value
-            _patients.value = originalList + withId
-            store.save(_patients.value)
+            val newList = _patients.value + withId
+            _patients.value = newList
+            store.save(newList)
 
             try {
                 val created = RetrofitInstance.api.createPatient(withId)
-                _patients.value = originalList + created
-                store.save(_patients.value)
+                val finalList = _patients.value.map {
+                    if (it.id == withId.id) created.copy(fotoUri = withId.fotoUri) else it
+                }
+                _patients.value = finalList
+                store.save(finalList)
             } catch (e: Exception) {
                 Log.e("ViewModel", "Fallo al añadir en backend, se mantiene en local", e)
             }
         }
     }
 
-    // --- LÓGICA DE BORRADO SEGURA (PESIMISTA) ---
     fun removePatient(id: String?) {
         if (id == null) return
         viewModelScope.launch {
             val originalList = _patients.value
-            try {
-                // 1. Primero intentar borrar en el backend
-                RetrofitInstance.api.deletePatient(id)
-                
-                // 2. Si tiene éxito, actualizar UI y caché local
-                _patients.value = originalList.filterNot { it.id == id }
-                store.save(_patients.value)
+            
+            val newList = originalList.filterNot { it.id == id }
+            _patients.value = newList
+            store.save(newList)
 
+            try {
+                RetrofitInstance.api.deletePatient(id)
             } catch (e: Exception) {
-                Log.e("ViewModel", "Fallo al borrar en backend, no se hacen cambios", e)
-                // Opcional: Mostrar un snackbar o toast con el error al usuario
+                Log.e("ViewModel", "Fallo al borrar en backend, revirtiendo", e)
+                _patients.value = originalList
+                store.save(originalList)
             }
         }
     }
 
-    fun updatePatient(patient: Patient) {
+    fun updatePatient(patient: Patient, context: Context) {
         val id = patient.id ?: return
         viewModelScope.launch {
             val originalList = _patients.value
-            // UI Optimista para que la edición se sienta rápida
-            _patients.value = originalList.map { if (it.id == id) patient else it }
-            store.save(_patients.value)
+            val patientToUpdate = originalList.find { it.id == id }
+
+            val savedImageUri = saveImageToInternalStorage(context, patient.fotoUri)
+            
+            val updatedPatientWithPhoto = patient.copy(
+                fotoUri = savedImageUri ?: patientToUpdate?.fotoUri
+            )
+
+            val newList = originalList.map { if (it.id == id) updatedPatientWithPhoto else it }
+            _patients.value = newList
+            store.save(newList)
 
             try {
-                RetrofitInstance.api.updatePatient(id, patient)
+                RetrofitInstance.api.updatePatient(id, updatedPatientWithPhoto)
             } catch (e: Exception) {
                 Log.e("ViewModel", "Fallo al actualizar en backend, revirtiendo", e)
                 _patients.value = originalList

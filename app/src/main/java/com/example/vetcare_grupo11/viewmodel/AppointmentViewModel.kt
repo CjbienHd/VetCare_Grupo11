@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vetcare_grupo11.network.AppointmentApiService
 import com.example.vetcare_grupo11.network.RetrofitInstance
 import com.example.vetcare_grupo11.notifications.programarRecordatorioCita
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -24,13 +26,18 @@ data class Appointment(
 )
 
 // ViewModel para manejar la lista de citas
-class AppointmentsViewModel : ViewModel() {
+class AppointmentsViewModel(
+    private val api: AppointmentApiService = RetrofitInstance.appointmentsApi
+) : ViewModel() {
 
     private val _appointments = MutableStateFlow<List<Appointment>>(emptyList())
-    val appointments: StateFlow<List<Appointment>> = _appointments
+    val appointments: StateFlow<List<Appointment>> = _appointments.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     init {
         loadFromBackend()
@@ -39,11 +46,15 @@ class AppointmentsViewModel : ViewModel() {
     fun loadFromBackend() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
+
             try {
-                val fromBackend = RetrofitInstance.appointmentsApi.getAppointments()
-                _appointments.value = fromBackend
+                val backendAppointments = api.getAppointments()
+                _appointments.value = backendAppointments
             } catch (e: Exception) {
-                Log.e("AppointmentsViewModel", "Error cargando citas", e)
+                Log.e("AppointmentsViewModel", "Error al cargar citas", e)
+                _appointments.value = emptyList()
+                _errorMessage.value = "No se pudo cargar las citas. Intenta nuevamente."
             } finally {
                 _isLoading.value = false
             }
@@ -57,10 +68,9 @@ class AppointmentsViewModel : ViewModel() {
             } else a
 
             try {
-                val created = RetrofitInstance.appointmentsApi.createAppointment(withId)
+                val created = api.createAppointment(withId)
                 _appointments.value = _appointments.value + created
 
-                // Dejado en modo de prueba para depurar notificaciones
                 programarRecordatorioCita(
                     context = context,
                     citaId = created.id!!,
@@ -73,7 +83,7 @@ class AppointmentsViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 Log.e("AppointmentsViewModel", "Error al crear cita", e)
-                _appointments.value = _appointments.value + withId
+                _errorMessage.value = "No se pudo crear la cita."
             }
         }
     }
@@ -84,28 +94,28 @@ class AppointmentsViewModel : ViewModel() {
             val originalList = _appointments.value
             _appointments.value = originalList.map { if (it.id == id) a else it }
             try {
-                RetrofitInstance.appointmentsApi.updateAppointment(id, a)
+                api.updateAppointment(id, a)
             } catch (e: Exception) {
                 Log.e("AppointmentsViewModel", "Error al actualizar cita", e)
                 _appointments.value = originalList
+                _errorMessage.value = "No se pudo actualizar la cita."
             }
         }
     }
 
-    fun removeAppointment(id: String?) {
-        if (id == null) return
+    fun deleteAppointment(id: String) {
         viewModelScope.launch {
-            val old = _appointments.value
-            _appointments.value = old.filterNot { it.id == id }
             try {
-                RetrofitInstance.appointmentsApi.deleteAppointment(id)
-            } catch (e: Exception) {
+                api.deleteAppointment(id)
+                _appointments.value = _appointments.value.filterNot { it.id == id }
+            } catch (e: Exception) { 
                 Log.e("AppointmentsViewModel", "Error al eliminar cita", e)
-                _appointments.value = old
+                _errorMessage.value = "No se pudo eliminar la cita."
             }
         }
     }
 
-    fun getAppointment(id: String): Appointment? =
-        appointments.value.find { it.id == id }
+    fun getAppointment(id: String): Appointment? {
+        return _appointments.value.find { it.id == id }
+    }
 }

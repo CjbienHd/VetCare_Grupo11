@@ -2,6 +2,7 @@
 
 package com.example.vetcare_grupo11.ui
 
+import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -43,7 +45,7 @@ fun AppNavigation(
         targetState = currentRoute,
         transitionSpec = {
             fadeIn(animationSpec = tween(300)) togetherWith
-            fadeOut(animationSpec = tween(300))
+                fadeOut(animationSpec = tween(300))
         },
         modifier = Modifier.fillMaxSize(),
         label = "NavTransitions"
@@ -57,7 +59,12 @@ fun AppNavigation(
                 composable("login") {
                     LoginVisualScreen(
                         onCreateAccount = { navController.navigate("register") },
-                        onLoginOk = { navController.navigate("loading") }
+                        onLoginOk = { userEmail ->
+                            ctx.getSharedPreferences("datos_app", Context.MODE_PRIVATE).edit {
+                                putString("logged_in_email", userEmail)
+                            }
+                            navController.navigate("loading")
+                        }
                     )
                 }
                 composable("register") {
@@ -71,10 +78,12 @@ fun AppNavigation(
                 composable("main") {
                     val patients by patientsVm.patients.collectAsState()
                     val appointments by appointmentsVm.appointments.collectAsState()
-                    val vacunasPendientes = appointments.count { it.esVacuna && it.estado == "Programada" }
+                    val vacunasPendientes = appointments.count { it.motivo.equals("Vacuna", ignoreCase = true) && it.estado == "Programada" }
+                    val userName = getUserName(ctx) // Obtener el nombre de usuario
 
                     MainScreen(
                         navController = navController,
+                        userName = userName,
                         pacientesActivos = patients.size,
                         onGoSettings = { navController.navigate("settings") },
                         onGoPatients = { navController.navigate("patients") },
@@ -90,7 +99,18 @@ fun AppNavigation(
                         onThemeChange = onThemeChange,
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { navController.navigate("patients") },
-                        onGoReminders = { navController.navigate("appointments") }
+                        onGoReminders = { navController.navigate("appointments") },
+                        onLogout = {
+                            ctx.getSharedPreferences("datos_app", Context.MODE_PRIVATE).edit {
+                                remove("logged_in_email")
+                            }
+                            navController.navigate("login") {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
                     )
                 }
 
@@ -126,9 +146,9 @@ fun AppNavigation(
                         onBack = { navController.popBackStack() },
                         onSave = { p ->
                             if (patient == null) {
-                                patientsVm.addPatient(p)
+                                patientsVm.addPatient(p, ctx)
                             } else {
-                                patientsVm.updatePatient(p)
+                                patientsVm.updatePatient(p, ctx)
                             }
                             navController.popBackStack()
                         },
@@ -138,17 +158,15 @@ fun AppNavigation(
                 }
 
                 composable("appointments") {
-                    val appointments by appointmentsVm.appointments.collectAsState()
                     val patients by patientsVm.patients.collectAsState()
 
                     AppointmentsScreen(
-                        appointments = appointments,
+                        appointmentsVm = appointmentsVm,
                         patients = patients,
                         onAddAppointment = { navController.navigate("appointment_form") },
                         onAppointmentClick = { cita ->
                             navController.navigate("appointment_form?id=${cita.id}")
                         },
-                        onRemoveAppointment = { appointmentsVm.removeAppointment(it.id) },
                         onGoHome = { navController.navigate("main") },
                         onGoPatients = { navController.navigate("patients") }
                     )
@@ -186,4 +204,20 @@ fun AppNavigation(
             }
         }
     }
+}
+
+private fun getUserName(context: Context): String {
+    val sp = context.getSharedPreferences("datos_app", Context.MODE_PRIVATE)
+    val loggedInEmail = sp.getString("logged_in_email", null)
+    if (loggedInEmail != null) {
+        val allUsers = sp.getString("usuarios", "") ?: ""
+        val userEntry = allUsers.split(";").find { it.startsWith("$loggedInEmail|") }
+        if (userEntry != null) {
+            val parts = userEntry.split("|")
+            if (parts.size == 3) {
+                return parts[2]
+            }
+        }
+    }
+    return ""
 }
