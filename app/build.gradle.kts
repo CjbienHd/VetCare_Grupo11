@@ -40,6 +40,14 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
+    }
 }
 
 dependencies {
@@ -82,10 +90,26 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
 
-    testImplementation("junit:junit:4.13.2")
+    // JUnit 5 (Jupiter)
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+
+    // Kotest solo como librería de aserciones (ya la usas así)
     testImplementation("io.kotest:kotest-assertions-core:5.9.0")
+
+    // Coroutines test
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    // MockK
     testImplementation("io.mockk:mockk:1.13.12")
+
+    testImplementation("org.robolectric:robolectric:4.10.3")
+
+    testImplementation("org.robolectric:shadows-framework:4.10.3")
+
+
+
+
 
 
 
